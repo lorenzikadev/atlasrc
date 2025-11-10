@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estoque | SRC Centrífugas</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="dashboard-page">
+
+    <div class="dashboard-container">
+        
+        <header class="header-main">
+            <div class="header-logo">
+                <a href="/dashboard.html" class="header-logo-link">
+                  <h2>SRC Centrífugas</h2>
+                </a>
+            </div>
+            <div class="header-title">
+                <h1>Consulta de Estoque</h1>
+            </div>
+        </header>
+
+        <aside class="sidebar">
+            <div class="user-profile">
+                <div class="user-icon"><i class="fas fa-user-circle"></i></div>
+                <div class="user-details">
+                    <h3>Rodrigo A.</h3>
+                    <p>rodrigogteste@gmail.com</p>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#"><i class="fas fa-cog"></i> Configurações da Conta</a></li>
+                    <li><a href="#"><i class="fas fa-key"></i> Mudar a senha</a></li>
+                    <li class="nav-separator"></li>
+                    <li><a href="/cadastro-produto.html"><i class="fas fa-plus-circle"></i> Cadastro de Produtos</a></li>
+                    <li><a href="/estoque.html" class="active"><i class="fas fa-warehouse"></i> Estoque</a></li>
+                    <li><a href="/propostas.html"><i class="fas fa-file-invoice-dollar"></i> Propostas Comerciais</a></li>
+                    <li class="nav-separator"></li>
+                    <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> Sair</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="card full-width">
+                <h2>Produtos Cadastrados</h2>
+                
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Buscar por SKU, Nome ou Vendedor...">
+                    <button class="btn-primary" id="searchButton"><i class="fas fa-search"></i> Buscar</button>
+                </div>
+
+                <div class="table-container">
+                    <table id="produtosTable">
+                        <thead>
+                            <tr>
+                                <th>SKU</th>
+                                <th>Nome</th>
+                                <th>Modelo/Ref.</th>
+                                <th>Fabricante</th>
+                                <th>Custo Mat. Prima</th>
+                                <th>Cadastrado em</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="6" style="text-align: center;">Carregando produtos...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="product-detail-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-modal-btn">&times;</span>
+            <h2 id="modal-title">Detalhes do Produto: [Nome]</h2>
+            
+            <div class="detail-section">
+                
+                <h3><i class="fas fa-tag"></i> Informações Básicas</h3>
+                <div class="detail-group">
+                    <p><strong>SKU/Referência:</strong> <span data-detail="sku"></span></p>
+                    <p><strong>Nome do Produto:</strong> <span data-detail="nome"></span></p>
+                    <p><strong>Modelo/Ref.:</strong> <span data-detail="modelo_maquina_ref"></span></p>
+                    <p><strong>Fabricante:</strong> <span data-detail="fabricante"></span></p>
+                </div>
+
+                <h3><i class="fas fa-file-invoice"></i> Fiscal e Medidas</h3>
+                <div class="detail-group">
+                    <p><strong>NCM:</strong> <span data-detail="ncm"></span></p>
+                    <p><strong>CFOP:</strong> <span data-detail="cfop"></span></p>
+                    <p><strong>Medidas (LxAxC):</strong> 
+                        <span data-detail="medida_largura"></span>cm x 
+                        <span data-detail="medida_altura"></span>cm x 
+                        <span data-detail="medida_comprimento"></span>cm
+                    </p>
+                </div>
+
+                <h3><i class="fas fa-industry"></i> Matéria-Prima e Encomenda</h3>
+                <div class="detail-group">
+                    <p><strong>Matéria-Prima:</strong> <span data-detail="materia_prima"></span></p>
+                    <p><strong>Custo Matéria-Prima:</strong> <span data-detail="custo_materia_prima"></span></p>
+                    <p><strong>Última Qtde. Encomendada:</strong> <span data-detail="ultima_encomenda"></span> unidades</p>
+                </div>
+
+                <h3><i class="fas fa-cogs"></i> Custos de Produção</h3>
+                <div class="detail-group">
+                    <p><strong>Proc. 1:</strong> <span data-detail="proc1_nome"></span> (<span data-detail="proc1_custo"></span>)</p>
+                    <p><strong>Proc. 2:</strong> <span data-detail="proc2_nome"></span> (<span data-detail="proc2_custo"></span>)</p>
+                    <p><strong>Proc. 3:</strong> <span data-detail="proc3_nome"></span> (<span data-detail="proc3_custo"></span>)</p>
+                    <p><strong>Proc. 4:</strong> <span data-detail="proc4_nome"></span> (<span data-detail="proc4_custo"></span>)</p>
+                    <p><strong>Proc. 5:</strong> <span data-detail="proc5_nome"></span> (<span data-detail="proc5_custo"></span>)</p>
+                </div>
+
+                <h3><i class="fas fa-calendar-alt"></i> Registro e Histórico</h3>
+                <div class="detail-group">
+                    <p><strong>Cadastrado em:</strong> <span data-detail="dataCadastro"></span></p>
+                    <p><strong>Última Alteração:</strong> <span data-detail="dataUltimaAlteracao"></span></p>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn-primary" id="edit-product-btn">Editar Produto</button>
+                <button class="btn-secondary" id="close-modal-btn-bottom">Fechar</button>
+            </div>
+        </div>
+    </div>
+    <script src="main.js"></script>
+</body>
+</html>

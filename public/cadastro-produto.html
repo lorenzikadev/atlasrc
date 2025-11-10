@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastro de Produto | SRC Centrífugas</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="dashboard-page">
+
+  <div class="dashboard-container">
+    
+    <header class="header-main">
+      <div class="header-logo">
+        <a href="/dashboard.html" class="header-logo-link">
+          <h2>SRC Centrífugas</h2>
+        </a>
+      </div>
+      <div class="header-title">
+        <h1>Cadastro de Produto</h1>
+      </div>
+    </header>
+
+    <aside class="sidebar">
+      <div class="user-profile">
+        <div class="user-icon">
+          <i class="fas fa-user-circle"></i>
+        </div>
+        <div class="user-details">
+          <h3>Rodrigo A.</h3>
+          <p>rodrigogteste@gmail.com</p>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <ul>
+          <li><a href="#"><i class="fas fa-cog"></i> Configurações da Conta</a></li>
+          <li><a href="#"><i class="fas fa-key"></i> Mudar a senha</a></li>
+          <li class="nav-separator"></li>
+          <li><a href="/cadastro-produto.html" class="active"><i class="fas fa-plus-circle"></i> Cadastro de Produtos</a></li>
+          <li><a href="/estoque.html"><i class="fas fa-warehouse"></i> Estoque</a></li>
+          <li><a href="/propostas.html"><i class="fas fa-file-invoice-dollar"></i> Propostas Comerciais</a></li>
+          <li class="nav-separator"></li>
+          <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> Sair</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      
+      <div class="wizard-container">
+        <div class="progress-bar">
+          <div class="progress-step active" data-step="1">1</div>
+          <div class="progress-step" data-step="2">2</div>
+          <div class="progress-step" data-step="3">3</div>
+        </div>
+
+        <form id="cadastro-form">
+          <input type="hidden" name="id" id="produtoId">
+          
+          <div class="form-step active">
+            <h3>1. Informações Básicas</h3>
+            <div class="form-group">
+              <label for="nome">Nome do Produto</label>
+              <input type="text" id="nome" name="nome" required>
+            </div>
+            <div class="form-group">
+              <label for="sku">SKU</label>
+              <input type="text" id="sku" name="sku" required>
+            </div>
+            <div class="form-group">
+              <label for="modelo_maquina_ref">Modelo de Máquina / Ref. do Produto</label>
+              <input type="text" id="modelo_maquina_ref" name="modelo_maquina_ref">
+            </div>
+            <div class="form-group">
+              <label for="fabricante">Fabricante da Peça</label>
+              <input type="text" id="fabricante" name="fabricante">
+            </div>
+            <div class="form-group">
+              <label for="ncm">NCM</label>
+              <input type="text" id="ncm" name="ncm" placeholder="0000.00.00" maxlength="10">
+            </div>
+            <div class="form-group">
+              <label for="cfop">CFOP</label>
+              <input type="text" id="cfop" name="cfop" placeholder="Ex: 5102" maxlength="4">
+            </div>
+            <div class="form-group">
+              <label for="medida_largura">Medidas da Peça: Largura (cm)</label>
+              <input type="number" id="medida_largura" name="medida_largura" min="0" step="0.01">
+            </div>
+            <div class="form-group">
+              <label for="medida_altura">Medidas da Peça: Altura (cm)</label>
+              <input type="number" id="medida_altura" name="medida_altura" min="0" step="0.01">
+            </div>
+            <div class="form-group">
+              <label for="medida_comprimento">Medidas da Peça: Comprimento (cm)</label>
+              <input type="number" id="medida_comprimento" name="medida_comprimento" min="0" step="0.01">
+            </div>
+          </div>
+
+          <div class="form-step">
+            <h3>2. Matéria-Prima e Encomenda</h3>
+            <div class="form-group">
+              <label for="ultima_encomenda">Última Quantidade Encomendada (unidades)</label>
+              <input type="number" id="ultima_encomenda" name="ultima_encomenda" min="0">
+            </div>
+            <div class="form-group">
+              <label for="materia_prima">Matéria-Prima do Produto</label>
+              <input type="text" id="materia_prima" name="materia_prima">
+            </div>
+            <div class="form-group">
+              <label for="custo_materia_prima">Custo da Matéria-Prima (R$)</label>
+              <input type="text" id="custo_materia_prima" name="custo_materia_prima" class="currency-input" placeholder="R$ 0,00">
+            </div>
+          </div>
+
+          <div class="form-step">
+            <h3>3. Custos de Produção</h3>
+            <div class="form-group">
+              <label for="proc1_nome">Processo Produtivo 1</label>
+              <input type="text" id="proc1_nome" name="proc1_nome">
+            </div>
+            <div class="form-group">
+              <label for="proc1_custo">Custo Processo 1 (R$)</label>
+              <input type="text" id="proc1_custo" name="proc1_custo" class="currency-input" placeholder="R$ 0,00">
+            </div>
+            <div class="form-group">
+              <label for="proc2_nome">Processo Produtivo 2</label>
+              <input type="text" id="proc2_nome" name="proc2_nome">
+            </div>
+            <div class="form-group">
+              <label for="proc2_custo">Custo Processo 2 (R$)</label>
+              <input type="text" id="proc2_custo" name="proc2_custo" class="currency-input" placeholder="R$ 0,00">
+            </div>
+            <div class="form-group">
+              <label for="proc3_nome">Processo Produtivo 3</label>
+              <input type="text" id="proc3_nome" name="proc3_nome">
+            </div>
+            <div class="form-group">
+              <label for="proc3_custo">Custo Processo 3 (R$)</label>
+              <input type="text" id="proc3_custo" name="proc3_custo" class="currency-input" placeholder="R$ 0,00">
+            </div>
+            <div class="form-group">
+              <label for="proc4_nome">Processo Produtivo 4</label>
+              <input type="text" id="proc4_nome" name="proc4_nome">
+            </div>
+            <div class="form-group">
+              <label for="proc4_custo">Custo Processo 4 (R$)</label>
+              <input type="text" id="proc4_custo" name="proc4_custo" class="currency-input" placeholder="R$ 0,00">
+            </div>
+            <div class="form-group">
+              <label for="proc5_nome">Processo Produtivo 5</label>
+              <input type="text" id="proc5_nome" name="proc5_nome">
+            </div>
+            <div class="form-group">
+              <label for="proc5_custo">Custo Processo 5 (R$)</label>
+              <input type="text" id="proc5_custo" name="proc5_custo" class="currency-input" placeholder="R$ 0,00">
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" id="btn-voltar" style="display: none;">Voltar</button>
+            <button type="button" class="btn-primary" id="btn-proximo">Próximo</button>
+          </div>
+
+        </form>
+      </div>
+
+    </main>
+  </div>
+  
+  <script src="main.js"></script>
+</body>
+</html>

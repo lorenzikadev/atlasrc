@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Propostas | SRC Centrífugas</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="dashboard-page">
+    <div class="dashboard-container">
+        <header class="header-main">
+            <div class="header-logo">
+                <a href="/dashboard.html" class="header-logo-link">
+                    <h2>SRC Centrífugas</h2>
+                </a>
+            </div>
+            <div class="header-title">
+                <h1>Propostas Comerciais</h1>
+            </div>
+        </header>
+        <aside class="sidebar">
+            <div class="user-profile">
+                <div class="user-icon"><i class="fas fa-user-circle"></i></div>
+                <div class="user-details">
+                    <h3>Rodrigo A.</h3>
+                    <p>rodrigogteste@gmail.com</p>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#"><i class="fas fa-cog"></i> Configurações da Conta</a></li>
+                    <li><a href="#"><i class="fas fa-key"></i> Mudar a senha</a></li>
+                    <li class="nav-separator"></li>
+                    <li><a href="/cadastro-produto.html"><i class="fas fa-plus-circle"></i> Cadastro de Produtos</a></li>
+                    <li><a href="/estoque.html"><i class="fas fa-warehouse"></i> Estoque</a></li>
+                    <li><a href="/propostas.html" class="active"><i class="fas fa-file-invoice-dollar"></i> Propostas Comerciais</a></li>
+                    <li class="nav-separator"></li>
+                    <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> Sair</a></li>
+                </ul>
+            </nav>
+        </aside>
+        <main class="main-content">
+            <div class="card full-width">
+                <div class="page-header">
+                    <h2>Propostas Ativas</h2>
+                    <a href="/cadastro-proposta.html" class="btn-primary">
+                        <i class="fas fa-plus"></i> Incluir Proposta
+                    </a>
+                </div>
+                <div class="table-container">
+                    <table id="propostasTable">
+                        <thead>
+                            <tr>
+                                <th>Nº Ordem Compra</th>
+                                <th>Importador</th>
+                                <th>Valor (USD)</th>
+                                <th>Validade</th>
+                                <th>Últ. Alteração</th>
+                                <th>Ações</th> </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="6" style="text-align: center;">Carregando propostas...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="main.js"></script>
+</body>
+</html>

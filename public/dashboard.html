@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | SRC Centrífugas</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="dashboard-page">
+  <div class="dashboard-container">
+    <header class="header-main">
+  _   <div class="header-logo">
+        <a href="/dashboard.html" class="header-logo-link">
+          <h2>SRC Centrífugas</h2>
+        </a>
+      </div>
+      <div class="header-title">
+        <h1>Painel de Vendas</h1>
+      </div>
+    </header>
+    <aside class="sidebar">
+      <div class="user-profile">
+        <div class="user-icon"><i class="fas fa-user-circle"></i></div>
+        <div class="user-details">
+          <h3>Rodrigo A.</h3>
+          <p>rodrigogteste@gmail.com</p>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <ul>
+          <li><a href="#"><i class="fas fa-cog"></i> Configurações da Conta</a></li>
+          <li><a href="#"><i class="fas fa-key"></i> Mudar a senha</a></li>
+          <li class="nav-separator"></li> 
+          <li><a href="/cadastro-produto.html"><i class="fas fa-plus-circle"></i> Cadastro de Produtos</a></li>
+          <li><a href="/estoque.html"><i class="fas fa-warehouse"></i> Estoque</a></li>           <li><a href="/propostas.html"><i class="fas fa-file-invoice-dollar"></i> Propostas Comerciais</a></li>
+          <li class="nav-separator"></li>
+          <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> Sair</a></li>
+        </ul>
+      </nav>
+    </aside> 
+    <main class="main-content">
+      <section class="summary-blocks">
+        
+          <div class="summary-card" id="total-vendas-mes">
+          <h4>Total de vendas (USD)</h4>
+          <span class="value">$ 0.00</span>
+          <span class="period">Este mês</span>
+        </div>
+        
+          <div class="summary-card">
+          <h4>NFe-s geradas no mês</h4>
+          <span class="value">0</span>
+          <span class="period">Este mês</span>
+        </div>
+        
+          <div class="summary-card" id="concluidos-mes-count">
+          <h4>Total de pedidos concluídos</h4>
+          <span class="value">0</span>
+          <span class="period">Este mês</span>
+        </div>
+
+        <div class="summary-card decorative" id="propostas-ativas-count"> 
+          <h4>Propostas Ativas</h4>
+          <span class="value">0</span>
+          <span class="period">Total</span>
+          <div class="card-chart-overlay">
+              <div class="chart-bar"></div>
+              <div class="chart-bar"></div>
+              <div class="chart-bar"></div>
+              <div class="chart-bar"></div>
+              <div class="chart-bar"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="charts-section">
+        
+          <div class="chart-card" id="comparativo-vendas-mes">
+          <div class="card-header"><h4>Comparativo de vendas (USD)</h4></div>
+          <div class="card-body"><p class="placeholder-text">Sem dados para exibir.</p></div>
+        </div>
+
+        <div class="chart-card">
+          <div class="card-header"><h4>Outro Indicador</h4></div>
+          <div class="card-body"><p class="placeholder-text">Sem dados para exibir.</p></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+  <script src="main.js"></script>
+</body>
+</html>
