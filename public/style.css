@@ -1,6 +1,11 @@
 /* style.css */
 
 /* --- Reset e Globais --- */
+:root {
+  /* Variável para controle de tamanho da fonte (será controlada pelo JS) */
+  --base-font-size-percent: 100%; 
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -10,6 +15,8 @@
 
 body {
   background-color: #f0f2f5;
+  /* Aplica o tamanho da fonte em todo o body */
+  font-size: var(--base-font-size-percent);
 }
 
 /* --- Estilos da Página de Login --- */
@@ -192,6 +199,7 @@ body {
   overflow-y: auto; /* Permite scroll */
   padding: 30px;
   background-color: #1A2035; /* Azul bem escuro (Bling) */
+  position: relative; /* Necessário para a barra de salvar */
 }
 
 .summary-blocks {
@@ -263,29 +271,27 @@ body {
 
 /* --- Estilos da Página de Cadastro (Wizard) --- */
 
-/* Estilo para o link ativo no menu */
 .sidebar-nav li a.active {
   background-color: #34495e;
   font-weight: bold;
 }
 
-/* Linha separadora do menu */
 .sidebar-nav li.nav-separator {
   height: 1px;
   background-color: #4a627a;
   margin: 10px 0;
 }
 
+/* Container de formulário (Reutilizado para Produtos, Propostas e Configurações) */
 .wizard-container {
-  background-color: #27293D; /* Cor dos cards (Bling) */
+  background-color: #27293D; 
   padding: 30px;
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.2);
   max-width: 900px;
-  margin: 0 auto; /* Centraliza o formulário */
+  margin: 0 auto; 
 }
 
-/* Barra de Progresso */
 .progress-bar {
   display: flex;
   justify-content: space-between;
@@ -293,7 +299,7 @@ body {
   position: relative;
 }
 
-.progress-bar::before { /* A linha de fundo */
+.progress-bar::before { 
   content: '';
   position: absolute;
   top: 50%;
@@ -321,18 +327,17 @@ body {
 }
 
 .progress-step.active {
-  background-color: #E67E22; /* Laranja */
+  background-color: #E67E22; 
   border-color: #E67E22;
   color: #fff;
 }
 
-/* Passos do Formulário */
 .form-step {
-  display: none; /* Esconde todos os passos por padrão */
+  display: none; 
 }
 
 .form-step.active {
-  display: block; /* Mostra o passo ativo */
+  display: block; 
 }
 
 .form-step h3 {
@@ -342,7 +347,6 @@ body {
   padding-bottom: 10px;
 }
 
-/* Aplica-se a TODOS os formulários (Produtos e Propostas) */
 .form-group {
   margin-bottom: 20px;
 }
@@ -350,7 +354,7 @@ body {
 .form-group label {
   display: block;
   margin-bottom: 8px;
-  color: #a9a9c8; /* Tom claro */
+  color: #a9a9c8; 
   font-size: 0.9rem;
 }
 
@@ -359,7 +363,7 @@ body {
 .form-group textarea {
   width: 100%;
   padding: 12px;
-  background-color: #1A2035; /* Fundo mais escuro */
+  background-color: #1A2035; 
   border: 1px solid #4a627a;
   border-radius: 4px;
   color: #f4f4f4;
@@ -379,7 +383,6 @@ body {
   box-shadow: 0 0 0 2px rgba(230, 126, 34, 0.3);
 }
 
-/* Botões de Ação do Formulário */
 .form-actions {
   margin-top: 30px;
   display: flex;
@@ -441,7 +444,7 @@ body {
 
 .search-bar button {
     padding: 10px 15px;
-    white-space: nowrap; /* Impede que o texto do botão quebre */
+    white-space: nowrap; 
 }
 
 /* --- Cabeçalho da Página de Lista (Propostas) --- */
@@ -466,7 +469,7 @@ body {
 }
 
 #produtosTable,
-#propostasTable { /* ADICIONADO */
+#propostasTable { 
     width: 100%;
     border-collapse: collapse; 
     margin-top: 10px;
@@ -475,15 +478,15 @@ body {
 
 #produtosTable th,
 #produtosTable td,
-#propostasTable th, /* ADICIONADO */
-#propostasTable td { /* ADICIONADO */
+#propostasTable th, 
+#propostasTable td { 
     padding: 12px 15px;
     text-align: left;
     border-bottom: 1px solid #3a3c53;
 }
 
 #produtosTable thead th,
-#propostasTable thead th { /* ADICIONADO */
+#propostasTable thead th { 
     background-color: #1A2035; 
     color: #E67E22; 
     font-weight: bold;
@@ -491,17 +494,17 @@ body {
 }
 
 #produtosTable tbody tr,
-#propostasTable tbody tr { /* ADICIONADO */
+#propostasTable tbody tr { 
     transition: background-color 0.3s ease;
 }
 
 #produtosTable tbody tr:hover,
-#propostasTable tbody tr:hover { /* ADICIONADO */
+#propostasTable tbody tr:hover { 
     background-color: #2e354a; 
 }
 
 #produtosTable tbody td,
-#propostasTable tbody td { /* ADICIONADO */
+#propostasTable tbody td { 
     color: #a9a9c8; 
 }
 
@@ -595,7 +598,7 @@ body {
 }
 
 #produtosTable tbody tr,
-#propostasTable tbody tr { /* ADICIONADO */
+#propostasTable tbody tr { 
     cursor: pointer; 
 }
 
@@ -643,7 +646,7 @@ a.header-logo-link:hover {
     to { /* A altura é definida inline */ }
 }
 
-/* NOVO: Gráfico Comparativo (Dashboard) */
+/* Gráfico Comparativo (Dashboard) */
 .comparativo-grafico {
     display: flex;
     flex-direction: column;
@@ -697,7 +700,7 @@ tr.proposta-concluida {
     background-color: #27ae60; /* Verde */
 }
 tr.proposta-concluida td {
-    color: #ecf0f1;
+    color: #ecf0f1 !important; /* Adiciona !important para garantir a cor */
     text-decoration: line-through;
 }
 tr.proposta-concluida:hover {
@@ -748,4 +751,133 @@ tr.proposta-concluida:hover {
 }
 .dropdown-content a:hover {
     background-color: #34495e;
+}
+
+
+/* --- NOVO: ESTILOS DA PÁGINA DE CONFIGURAÇÕES --- */
+
+/* Layout principal de Configurações (Menu Secundário + Conteúdo) */
+.config-container {
+    display: grid;
+    grid-template-columns: 240px 1fr; /* Menu lateral secundário e o conteúdo */
+    gap: 30px;
+    height: 100%; /* Ocupa a altura do .main-content */
+}
+
+/* Menu lateral secundário (Geral, Cadastro, etc.) */
+.config-sidebar {
+    background-color: #27293D; /* Cor dos cards */
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.config-sidebar-nav ul {
+    list-style: none;
+}
+
+.config-sidebar-nav li a {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    color: #a9a9c8; /* Cor clara */
+    text-decoration: none;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    font-weight: bold;
+    font-size: 0.95rem;
+    border-left: 3px solid transparent; /* Borda esquerda para indicar item ativo */
+}
+
+.config-sidebar-nav li a:hover {
+    background-color: #1A2035; /* Fundo mais escuro */
+    color: #FFF;
+}
+
+.config-sidebar-nav li a.active {
+    background-color: #1A2035;
+    color: #E67E22; /* Laranja */
+    border-left: 3px solid #E67E22;
+}
+
+.config-sidebar-nav li a i {
+    margin-right: 15px;
+    width: 20px;
+    text-align: center;
+}
+
+/* Conteúdo da aba de configuração */
+.config-content {
+    background-color: #27293D;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    /* Deixa espaço no final para a barra de salvar */
+    padding-bottom: 100px; 
+}
+
+/* Título de uma seção (ex: "Dados da Empresa") */
+.config-section h3 {
+    color: #E67E22;
+    margin-bottom: 25px;
+    border-bottom: 1px solid #4a627a;
+    padding-bottom: 10px;
+}
+
+/* Grupo de campos lado a lado */
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px; /* Espaço entre os campos */
+}
+
+.form-row .form-group {
+    flex: 1 1 300px; /* Faz os campos crescerem, mas com uma base de 300px */
+}
+
+/* Controle de Fonte */
+.font-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.font-control-btn {
+    background-color: #4a627a;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+.font-control-btn:hover {
+    background-color: #5c7a99;
+}
+.font-control-btn i {
+    margin: 0; /* Reseta o margin que demos para os ícones do menu */
+}
+
+
+/* Barra flutuante de Salvar/Cancelar */
+.save-bar {
+    position: absolute;
+    bottom: -100px; /* Escondido por padrão */
+    left: 260px; /* Começa depois da sidebar principal */
+    right: 0;
+    background-color: #2c3e50; /* Cor da sidebar */
+    padding: 20px 30px;
+    box-shadow: 0 -4px 10px rgba(0,0,0,0.3);
+    display: flex;
+    justify-content: flex-end; /* Alinha botões à direita */
+    gap: 15px;
+    transition: bottom 0.5s ease-in-out;
+    z-index: 99;
+}
+
+.save-bar.visible {
+    bottom: 0; /* Mostra a barra */
 }

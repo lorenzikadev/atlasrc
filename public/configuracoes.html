@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurações | SRC Centrífugas</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="dashboard-page">
+
+    <div class="dashboard-container">
+        
+        <header class="header-main">
+            <div class="header-logo">
+                <a href="/dashboard.html" class="header-logo-link">
+                  <h2>SRC Centrífugas</h2>
+                </a>
+            </div>
+            <div class="header-title">
+                <h1>Configurações da Conta</h1>
+            </div>
+        </header>
+
+        <aside class="sidebar">
+            <div class="user-profile">
+                <div class="user-icon"><i class="fas fa-user-circle"></i></div>
+                <div class="user-details">
+                    <h3>Rodrigo A.</h3>
+                    <p>rodrigogteste@gmail.com</p>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="/configuracoes.html" class="active"><i class="fas fa-cog"></i> Configurações da Conta</a></li>
+                    <li><a href="#"><i class="fas fa-key"></i> Mudar a senha</a></li>
+                    <li class="nav-separator"></li> 
+                    <li><a href="/cadastro-produto.html"><i class="fas fa-plus-circle"></i> Cadastro de Produtos</a></li>
+                    <li><a href="/estoque.html"><i class="fas fa-warehouse"></i> Estoque</a></li>
+                    <li><a href="/propostas.html"><i class="fas fa-file-invoice-dollar"></i> Propostas Comerciais</a></li>
+                    <li class="nav-separator"></li>
+                    <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> Sair</a></li>
+                </ul>
+            </nav>
+        </aside> 
+
+        <main class="main-content">
+            
+            <div class="config-container">
+                
+                <aside class="config-sidebar">
+                    <nav class="config-sidebar-nav">
+                        <ul>
+                            <li><a href="#" class="active"><i class="fas fa-tools"></i> Geral</a></li>
+                            <li><a href="#"><i class="fas fa-id-card"></i> Cadastro</a></li>
+                            <li><a href="#"><i class="fas fa-cogs"></i> Operacional</a></li>
+                            <li><a href="#"><i class="fas fa-dollar-sign"></i> Financeiro</a></li>
+                            <li><a href="#"><i class="fas fa-save"></i> Backups</a></li>
+                            <li><a href="#"><i class="fas fa-users"></i> Contas</a></li>
+                        </ul>
+                    </nav>
+                </aside>
+                
+                <div class="config-content">
+                    <form id="config-form-geral">
+                        
+                        <div class="config-section">
+                            <h3>Geral</h3>
+                            <div class="form-group">
+                                <label>Tamanho da Fonte</label>
+                                <div class="font-control">
+                                    <button type="button" class="font-control-btn" id="font-decrease"><i class="fas fa-search-minus"></i></button>
+                                    <button type="button" class="font-control-btn" id="font-increase"><i class="fas fa-search-plus"></i></button>
+                                </div>
+                            </div>
+                             <div class="form-group">
+                                <label for="idioma">Idioma do Sistema</label>
+                                <select id="idioma" name="idioma">
+                                    <option value="pt-br">Português (Brasil)</option>
+                                    <option value="en-us" disabled>Inglês (Em breve)</option>
+                                    <option value="es" disabled>Espanhol (Em breve)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="config-section">
+                            <h3>Dados da Empresa</h3>
+                            <div class="form-row">
+                                <div class="form-group" style="flex-basis: 100%;">
+                                    <label for="logoUrl">URL do Logo</label>
+                                    <input type="text" id="logoUrl" name="logoUrl" placeholder="https://.../logo.png">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="nomeEmpresa">Nome da Empresa (Obrigatório)</label>
+                                    <input type="text" id="nomeEmpresa" name="nomeEmpresa" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="nomeFantasia">Nome Fantasia (Obrigatório)</label>
+                                    <input type="text" id="nomeFantasia" name="nomeFantasia" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="razaoSocial">Razão Social (Obrigatório)</label>
+                                <input type="text" id="razaoSocial" name="razaoSocial" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="cnpj">CNPJ (Obrigatório)</label>
+                                    <input type="text" id="cnpj" name="cnpj" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="inscricaoEstadual">Inscrição Estadual</label>
+                                    <input type="text" id="inscricaoEstadual" name="inscricaoEstadual">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="atividadePrincipal">Atividade Principal</label>
+                                <input type="text" id="atividadePrincipal" name="atividadePrincipal">
+                            </div>
+                        </div>
+
+                        <div class="config-section">
+                            <h3>Endereço</h3>
+                            <div class="form-row">
+                                <div class="form-group" style="flex: 3;"> <label for="enderecoRua">Rua</label>
+                                    <input type="text" id="enderecoRua" name="enderecoRua">
+                                </div>
+                                <div class="form-group" style="flex: 1;"> <label for="enderecoNumero">Número</label>
+                                    <input type="text" id="enderecoNumero" name="enderecoNumero">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="enderecoBairro">Bairro</label>
+                                    <input type="text" id="enderecoBairro" name="enderecoBairro">
+                                </div>
+                                <div class="form-group">
+                                    <label for="enderecoComplemento">Complemento</label>
+                                    <input type="text" id="enderecoComplemento" name="enderecoComplemento">
+                                </div>
+                            </div>
+                        </div>
+
+                         <div class="config-section">
+                            <h3>Contato</h3>
+                             <div class="form-row">
+                                <div class="form-group">
+                                    <label for="telefone">Telefone (Obrigatório)</label>
+                                    <input type="text" id="telefone" name="telefone" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="email">E-mail (Obrigatório)</label>
+                                    <input type="email" id="email" name="email" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="site">Site</label>
+                                <input type="text" id="site" name="site" placeholder="https://www.exemplo.com">
+                            </div>
+                        </div>
+
+                    </form>
+                </div> </div> </main>
+
+        <div class="save-bar" id="save-bar">
+            <button type="button" class="btn-secondary" id="cancel-config-btn">Cancelar</button>
+            <button type="button" class="btn-primary" id="save-config-btn">Salvar Alterações</button>
+        </div>
+
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>
