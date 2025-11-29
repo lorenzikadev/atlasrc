@@ -4,6 +4,26 @@
 let listaProdutos = [];
 let listaPropostas = []; 
 
+// --- INTERCEPTADOR DE AMBIENTE DE TESTE ---
+// Isso garante que NENHUM dado de teste vá para o banco de produção
+const originalFetch = window.fetch;
+window.fetch = function(url, options) {
+    const isTest = localStorage.getItem('isTestEnv') === 'true';
+    
+    // Se estiver em modo de teste, injeta o aviso no cabeçalho da requisição
+    if (isTest) {
+        if (!options) options = {};
+        if (!options.headers) options.headers = {};
+        
+        // Adiciona a tag 'x-test-env'
+        if (options.headers.constructor === Object) {
+            options.headers['x-test-env'] = 'true';
+        }
+    }
+    
+    return originalFetch(url, options);
+};
+
 // --- FUNÇÕES HELPER DE FORMATAÇÃO ---
 function formatCurrency(value) {
     if (isNaN(value) || value === null || value === "" || value === 0) return "R$ 0,00";
@@ -51,13 +71,30 @@ const checkNA = (value) => {
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- NOVO: LÓGICA GLOBAL DE TAMANHO DA FONTE ---
+    // --- LÓGICA GLOBAL DE TAMANHO DA FONTE ---
     const aplicarTamanhoFonteSalvo = () => {
         const tamanho = localStorage.getItem('fontSize') || '100'; 
         document.documentElement.style.setProperty('--base-font-size-percent', `${tamanho}%`);
     };
     aplicarTamanhoFonteSalvo();
     // --- FIM LÓGICA DE FONTE ---
+
+    // --- LÓGICA GLOBAL DE FOTO DE PERFIL ---
+    const loadProfilePic = () => {
+        const profilePicDataUrl = localStorage.getItem('userProfilePic');
+        if (profilePicDataUrl) {
+            const sidebarPic = document.getElementById('sidebar-profile-pic');
+            if (sidebarPic) {
+                sidebarPic.src = profilePicDataUrl;
+            }
+            const modalPic = document.getElementById('modal-profile-pic-avatar');
+             if (modalPic) {
+                modalPic.src = profilePicDataUrl;
+            }
+        }
+    };
+    loadProfilePic();
+    // --- FIM LÓGICA DE FOTO ---
 
     // --- LÓGICA DA TELA DE LOGIN ---
     const loginForm = document.getElementById('login-form');
@@ -86,17 +123,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- LÓGICA DO DASHBOARD (SIDEBAR) ---
+    // Função de logout reutilizável
+    const handleLogout = (e) => {
+        e.preventDefault();
+        window.location.href = '/index.html';
+    };
+
     const logoutButton = document.getElementById('logout-button');
     if (logoutButton) {
-        logoutButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            window.location.href = '/index.html';
-        });
+        logoutButton.addEventListener('click', handleLogout);
     }
 
     // --- LÓGICA DO DASHBOARD (CARDS ATUALIZADA) ---
-    const cardPropostasCount = document.getElementById('propostas-ativas-count');
-    const cardVendasTotal = document.getElementById('total-vendas-mes');    
+    const cardPropostasCount = document.getElementById('propostas-ativas-count'); 
+    const cardVendasTotal = document.getElementById('total-vendas-mes');     
     const cardConcluidosCount = document.getElementById('concluidos-mes-count'); 
     const cardComparativo = document.getElementById('comparativo-vendas-mes'); 
 
@@ -149,7 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const statsRes = await fetch('/api/dashboard/vendas-stats');
             const stats = await statsRes.json();
             const propostasRes = await fetch('/api/propostas');
-            const propostasAtivas = await propostasRes.json(); 
+            const propostasAtivas = (await propostasRes.json()).filter(p => p.status === 'ativa'); 
             valorVendasEl.textContent = formatCurrencyUSD(stats.vendasMesAtualUSD);
             valorConcluidosEl.textContent = stats.concluidosMesCount;
             valorPropostasEl.textContent = propostasAtivas.length;
@@ -398,32 +438,188 @@ document.addEventListener('DOMContentLoaded', () => {
         carregarProdutos();
     }
 
-    // --- LÓGICA DA PÁGINA DE PROPOSTAS ---
+    // --- LÓGICA DA PÁGINA DE PROPOSTAS (LISTAGEM) ---
     const propostasTable = document.getElementById('propostasTable');
-    const propostaForm = document.getElementById('proposta-form');
+    // REMOVI O CÓDIGO ANTIGO DO FORMULÁRIO AQUI PARA INSERIR O NOVO ABAIXO
 
+    // --- LÓGICA DO FORMULÁRIO DE PROPOSTAS (ATUALIZADO COM ITENS) ---
+    const propostaForm = document.getElementById('proposta-form');
+    
     if (propostaForm) {
-        // (Lógica do Formulário de Propostas)
-        const urlParams = new URLSearchParams(window.location.search);
-        const editId = urlParams.get('editId');
-        const hiddenIdInput = document.getElementById('propostaId');
+        // 1. Variáveis de Estado
+        let itensProposta = []; // Array que guarda os itens adicionados
+        let todosProdutos = []; // Cache para a busca
+
+        // 2. Carregar produtos do estoque para a busca
+        fetch('/api/produtos')
+            .then(r => r.json())
+            .then(data => todosProdutos = data)
+            .catch(e => console.error("Erro ao carregar produtos:", e));
+
+        // 3. Elementos da Interface
+        const searchInput = document.getElementById('produto-search');
+        const resultsBox = document.getElementById('search-results');
+        const tbodyItens = document.getElementById('itens-tbody');
+        const inputTotalUSD = document.getElementById('valor_total_usd');
         const validadeInput = document.getElementById('validade_proposta');
-        if (validadeInput) {
-            validadeInput.addEventListener('input', (e) => formatDateInput(e.target));
+        const hiddenIdInput = document.getElementById('propostaId');
+
+        // Formatação inicial dos inputs
+        if (validadeInput) validadeInput.addEventListener('input', (e) => formatDateInput(e.target));
+        // O inputTotalUSD agora é readonly, não precisa de evento de input manual
+
+        // --- FUNÇÕES DE BUSCA E SELEÇÃO ---
+        
+        // Filtrar produtos ao digitar
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                const termo = e.target.value.toLowerCase();
+                if (termo.length < 2) {
+                    resultsBox.style.display = 'none';
+                    return;
+                }
+                
+                const resultados = todosProdutos.filter(p => {
+                    const textoCompleto = `${p.sku || ''} ${p.nome} ${p.ncm || ''}`.toLowerCase();
+                    return textoCompleto.includes(termo);
+                });
+
+                renderResultadosBusca(resultados);
+            });
+
+            // Fechar busca ao clicar fora
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#produto-search') && !e.target.closest('#search-results')) {
+                    resultsBox.style.display = 'none';
+                }
+            });
         }
-        const valorUsdInput = document.getElementById('valor_total_usd');
-        if (valorUsdInput) {
-            valorUsdInput.addEventListener('input', (e) => formatCurrencyInputUSD(e.target));
-        }
+
+        const renderResultadosBusca = (lista) => {
+            resultsBox.innerHTML = '';
+            if (lista.length === 0) {
+                resultsBox.style.display = 'none';
+                return;
+            }
+
+            lista.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'result-item';
+                div.innerHTML = `<strong>${p.sku || 'S/C'}</strong> - ${p.nome} <small>(${formatCurrency(p.salePrice || 0)})</small>`;
+                div.addEventListener('click', () => adicionarItemNaTabela(p));
+                resultsBox.appendChild(div);
+            });
+            resultsBox.style.display = 'block';
+        };
+
+        const adicionarItemNaTabela = (produto) => {
+            // Verifica se já adicionou
+            const existe = itensProposta.find(i => i.id === produto.id);
+            if (existe) {
+                alert('Este produto já está na lista.');
+                return;
+            }
+
+            // Cria o objeto do item
+            // Tenta pegar o preço de venda se existir, senão 0
+            const precoBase = produto.salePrice || 0; // Se tiver salePrice no BD, usa. Se não, 0.
+
+            itensProposta.push({
+                id: produto.id,
+                sku: produto.sku || '',
+                nome: produto.nome,
+                ncm: produto.ncm || '',
+                qtd: 1,
+                valorUnit: precoBase
+            });
+
+            searchInput.value = '';
+            resultsBox.style.display = 'none';
+            renderTabela();
+        };
+
+        // --- FUNÇÕES DA TABELA DE ITENS ---
+
+        const renderTabela = () => {
+            tbodyItens.innerHTML = '';
+
+            if (itensProposta.length === 0) {
+                tbodyItens.innerHTML = '<tr id="empty-row"><td colspan="7" style="text-align: center; padding: 20px; color: #a9a9c8;">Nenhum item adicionado. Use a busca acima.</td></tr>';
+                atualizarTotalGeral();
+                return;
+            }
+
+            itensProposta.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                const totalItem = item.qtd * item.valorUnit;
+
+                tr.innerHTML = `
+                    <td>${item.sku}</td>
+                    <td>${item.nome}</td>
+                    <td>${item.ncm}</td>
+                    <td><input type="number" class="qtd-input" data-index="${index}" value="${item.qtd}" min="1" style="width: 60px; text-align: center;"></td>
+                    <td><input type="text" class="val-input" data-index="${index}" value="${formatCurrencyUSD(item.valorUnit)}" style="width: 100px;"></td>
+                    <td style="color: #fff;">${formatCurrencyUSD(totalItem)}</td>
+                    <td style="text-align: center;">
+                        <button type="button" class="btn-remove-item" data-index="${index}" style="background:none; border:none; color:#e74c3c; cursor:pointer;"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                tbodyItens.appendChild(tr);
+            });
+
+            // Adicionar eventos aos inputs da tabela (Qtd e Valor)
+            document.querySelectorAll('.qtd-input').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const idx = e.target.getAttribute('data-index');
+                    itensProposta[idx].qtd = parseInt(e.target.value) || 1;
+                    renderTabela(); // Re-renderiza para atualizar totais
+                });
+            });
+
+            document.querySelectorAll('.val-input').forEach(input => {
+                input.addEventListener('input', (e) => formatCurrencyInputUSD(e.target));
+                input.addEventListener('change', (e) => {
+                    const idx = e.target.getAttribute('data-index');
+                    itensProposta[idx].valorUnit = unformatCurrencyUSD(e.target.value);
+                    renderTabela();
+                });
+            });
+
+            document.querySelectorAll('.btn-remove-item').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = e.target.closest('button').getAttribute('data-index');
+                    itensProposta.splice(idx, 1); // Remove do array
+                    renderTabela();
+                });
+            });
+
+            atualizarTotalGeral();
+        };
+
+        const atualizarTotalGeral = () => {
+            const total = itensProposta.reduce((acc, item) => acc + (item.qtd * item.valorUnit), 0);
+            if (inputTotalUSD) {
+                inputTotalUSD.value = formatCurrencyUSD(total);
+            }
+        };
+
+        // --- SUBMIT DO FORMULÁRIO ---
         const submitPropostaForm = async (e) => {
             e.preventDefault();
             const formData = new FormData(propostaForm);
             const propostaData = Object.fromEntries(formData.entries());
-            propostaData.valor_total_usd = unformatCurrencyUSD(propostaData.valor_total_usd);
+            
+            // Pega o valor total calculado (removendo formatação)
+            propostaData.valor_total_usd = unformatCurrencyUSD(inputTotalUSD.value);
             propostaData.dataUltimaAlteracao = new Date().toLocaleString('pt-BR');
+            
+            // Adiciona a lista de itens ao objeto que vai pro servidor
+            propostaData.itens = itensProposta;
+
             const isEditing = propostaData.id;
             const endpoint = '/cadastrar-proposta';
             const method = 'POST';
+
             try {
                 const response = await fetch(endpoint, {
                     method: method,
@@ -434,24 +630,33 @@ document.addEventListener('DOMContentLoaded', () => {
                     alert(`Proposta ${isEditing ? 'atualizada' : 'cadastrada'} com sucesso!`);
                     window.location.href = '/propostas.html';
                 } else {
-                    alert(`Erro ao ${isEditing ? 'atualizar' : 'cadastrar'} proposta.`);
+                    alert('Erro ao salvar proposta.');
                 }
             } catch (error) {
                 console.error('Erro de rede:', error);
-                alert('Erro de conexão com o servidor.');
+                alert('Erro de conexão.');
             }
         };
         propostaForm.addEventListener('submit', submitPropostaForm);
+
+        // --- CARREGAMENTO (EDIÇÃO E CONFIGURAÇÕES) ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const editId = urlParams.get('editId');
+
+        // Se for EDIÇÃO: Carrega dados + Itens
         if (editId) {
             const loadPropostaForEdit = async (id) => {
                 try {
                     const response = await fetch(`/api/propostas/${id}`);
                     if (!response.ok) throw new Error('Proposta não encontrada');
                     const proposta = await response.json();
+                    
+                    // Preenche campos normais
                     for (const key in proposta) {
                         const input = document.querySelector(`[name="${key}"]`);
                         if (input) {
                             if (key === 'valor_total_usd') {
+                                // O total será recalculado pelos itens, mas preenchemos por segurança
                                 input.value = formatCurrencyUSD(proposta[key]);
                             } else {
                                 input.value = proposta[key];
@@ -459,21 +664,209 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                     hiddenIdInput.value = id;
-                    document.title = `Edição de Proposta | ${proposta.ordem_compra || id}`;
+                    document.title = `Edição | ${proposta.ordem_compra || id}`;
                     document.querySelector('.header-title h1').textContent = 'Edição de Proposta';
                     document.getElementById('proposta-submit-btn').textContent = 'Salvar Alterações';
+
+                    // Preenche a Tabela de Itens
+                    if (proposta.itens && Array.isArray(proposta.itens)) {
+                        itensProposta = proposta.itens;
+                        renderTabela();
+                    }
+
                 } catch (error) {
-                    console.error('Erro ao carregar proposta:', error);
-                    alert('Erro: Proposta não encontrada.');
+                    console.error('Erro ao carregar:', error);
+                    alert('Erro ao carregar proposta.');
                     window.location.href = '/propostas.html';
                 }
             };
             loadPropostaForEdit(editId);
+        } else {
+            // Se for NOVA PROPOSTA: Aplica Configurações Operacionais
+            fetch('/api/configuracoes/operacional')
+                .then(r => r.json())
+                .then(config => {
+                    // Validade Automática
+                    if (config.validadePadrao && config.validadePadrao > 0) {
+                        const hoje = new Date();
+                        hoje.setDate(hoje.getDate() + parseInt(config.validadePadrao));
+                        const dia = String(hoje.getDate()).padStart(2, '0');
+                        const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+                        const ano = hoje.getFullYear();
+                        if (validadeInput) {
+                            validadeInput.value = `${dia}/${mes}/${ano}`;
+                            validadeInput.dispatchEvent(new Event('input'));
+                        }
+                    }
+                    // Numeração Automática
+                    if (config.numeracaoAuto) {
+                        const inputRef = document.getElementById('ordem_compra');
+                        if (inputRef) {
+                            inputRef.value = `REF-${Date.now().toString().slice(-6)}`;
+                            inputRef.setAttribute('readonly', true);
+                            inputRef.style.backgroundColor = '#e9ecef';
+                        }
+                    }
+                })
+                .catch(() => {});
         }
     }
 
-    if (propostasTable) {
-        // (Lógica da Tabela de Propostas)
+ if (propostasTable) {
+        
+        // Helper: Carrega imagem e retorna suas dimensões
+        const carregarImagem = (src) => {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.src = src;
+                img.onload = () => resolve(img);
+                img.onerror = () => resolve(null);
+            });
+        };
+
+        // --- FUNÇÃO: GERAR PDF DA PROPOSTA ---
+        const gerarPDFProposta = async (id) => {
+            try {
+                // 1. Buscar dados
+                const response = await fetch(`/api/propostas/${id}`);
+                if (!response.ok) throw new Error('Erro ao buscar dados');
+                const prop = await response.json();
+
+                // 2. Carregar Imagem (Apenas Logo 2)
+                const logo2 = await carregarImagem('/logo2.png');
+
+                // 3. Inicializar jsPDF
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+
+                // --- CABEÇALHO ---
+                
+                // Logo 2 (Posicionada na Esquerda)
+                if (logo2) {
+                    const imgWidth = 40;
+                    const imgHeight = (logo2.height / logo2.width) * imgWidth;
+                    doc.addImage(logo2, 'PNG', 15, 10, imgWidth, imgHeight); // X=15 (Esquerda)
+                }
+
+                // Dados da Empresa (Centralizado no Topo)
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(10);
+                doc.setTextColor(0, 51, 102);
+                doc.text("RODRIGO A AMORIM CENTRIFUGAS", 105, 18, { align: "center" });
+                
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(8);
+                doc.setTextColor(80);
+                const dadosEmpresa = [
+                    "Rua Colômbia, 36 - Jd. Belo Horizonte; 1350-184",
+                    "CNPJ: 07.176.742/0001-11",
+                    "Telefone: (19) 99208-0035 | E-mail: comex@srccentrifugas.com"
+                ];
+                doc.text(dadosEmpresa, 105, 23, { align: "center", lineHeightFactor: 1.2 });
+
+                // Linha divisória
+                doc.setDrawColor(230, 126, 34); 
+                doc.setLineWidth(0.5);
+                doc.line(15, 40, 195, 40);
+
+                // --- TÍTULO DA PROPOSTA ---
+                doc.setFontSize(14);
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(0);
+                doc.text(`PROPOSTA COMERCIAL #${prop.ordem_compra || id}`, 15, 50);
+
+                // Detalhes
+                doc.setFontSize(9);
+                doc.setFont("helvetica", "normal");
+                doc.text(`Data de Emissão: ${checkNA(prop.dataCadastro)}`, 15, 57);
+                doc.text(`Validade: ${checkNA(prop.validade_proposta)}`, 80, 57);
+                doc.text(`Incoterm: ${checkNA(prop.incoterms)}`, 140, 57);
+
+                // --- DADOS DO IMPORTADOR ---
+                doc.setFillColor(245, 245, 245);
+                doc.rect(15, 63, 180, 22, 'F');
+                
+                doc.setFont("helvetica", "bold");
+                doc.text("IMPORTADOR:", 18, 69);
+                
+                doc.setFont("helvetica", "normal");
+                doc.text(`${checkNA(prop.nome_importador)}`, 18, 74);
+                
+                doc.setFontSize(8);
+                const enderecoSplit = doc.splitTextToSize(checkNA(prop.endereco_importador), 170);
+                doc.text(enderecoSplit, 18, 79);
+
+                // --- TABELA DE ITENS ---
+                const colunas = ["Código", "Produto", "NCM", "Qtd", "V. Unit (USD)", "Total (USD)"];
+                const linhas = prop.itens ? prop.itens.map(item => [
+                    item.sku,
+                    item.nome,
+                    item.ncm,
+                    item.qtd,
+                    formatCurrencyUSD(item.valorUnit),
+                    formatCurrencyUSD(item.qtd * item.valorUnit)
+                ]) : [];
+
+                doc.autoTable({
+                    startY: 90,
+                    head: [colunas],
+                    body: linhas,
+                    theme: 'striped',
+                    headStyles: { 
+                        fillColor: [230, 126, 34], 
+                        textColor: 255, 
+                        fontStyle: 'bold',
+                        halign: 'center'
+                    },
+                    styles: { fontSize: 9, cellPadding: 3 },
+                    columnStyles: {
+                        0: { cellWidth: 25 },
+                        1: { cellWidth: 'auto' },
+                        2: { cellWidth: 25, halign: 'center' },
+                        3: { cellWidth: 15, halign: 'center' },
+                        4: { cellWidth: 25, halign: 'right' },
+                        5: { cellWidth: 25, halign: 'right' }
+                    }
+                });
+
+                // --- TOTAL GERAL ---
+                const finalY = doc.lastAutoTable.finalY + 5;
+                doc.setFillColor(230, 126, 34);
+                doc.rect(140, finalY, 55, 10, 'F');
+                doc.setTextColor(255);
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "bold");
+                doc.text(`TOTAL: ${formatCurrencyUSD(prop.valor_total_usd)}`, 192, finalY + 7, { align: "right" });
+
+                // --- RODAPÉ (DADOS BANCÁRIOS) ---
+                const pageHeight = doc.internal.pageSize.height;
+                
+                doc.setDrawColor(200);
+                doc.line(15, pageHeight - 45, 195, pageHeight - 45);
+
+                // Dados Bancários
+                doc.setTextColor(0);
+                doc.setFontSize(9);
+                doc.setFont("helvetica", "bold");
+                doc.text("DADOS BANCÁRIOS PARA PAGAMENTO:", 15, pageHeight - 38);
+
+                doc.setFontSize(8);
+                doc.setFont("helvetica", "normal");
+                doc.text("Banco: Santander", 15, pageHeight - 32);
+                doc.text("IBAN: BR8690400888000900130131417C1", 60, pageHeight - 32);
+                doc.text("SWIFT: BSCHBRSPXXX", 140, pageHeight - 32);
+                doc.text("Agência: 0090  |  Conta: 130131417", 15, pageHeight - 27);
+
+                // --- SALVAR ---
+                doc.save(`Proposta_${prop.ordem_compra || id}.pdf`);
+
+            } catch (error) {
+                console.error("Erro ao gerar PDF:", error);
+                alert("Erro ao gerar PDF. Verifique o console.");
+            }
+        };
+
+        // --- MANIPULAÇÃO DA TABELA ---
         const marcarPropostaConcluida = async (id, row) => {
             try {
                 const response = await fetch(`/api/propostas/concluir/${id}`, { method: 'POST' });
@@ -483,12 +876,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (kebabCell) {
                     kebabCell.innerHTML = '<i class="fas fa-check" style="color: #27ae60; font-size: 1.2rem;"></i>';
                 }
-                loadDashboardStats(); 
+                if (typeof loadDashboardStats === 'function') loadDashboardStats(); 
             } catch (error) {
                 console.error("Erro ao concluir proposta:", error);
                 alert("Não foi possível marcar a proposta como concluída.");
             }
         };
+
         const carregarPropostas = async () => {
             const tbody = propostasTable.querySelector('tbody');
             tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Carregando...</td></tr>';
@@ -510,6 +904,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     row.insertCell().textContent = checkNA(proposta.dataUltimaAlteracao);
                     const acoesCell = row.insertCell();
                     acoesCell.classList.add('kebab-cell');
+                    
                     if (proposta.status === 'concluida') {
                         row.classList.add('proposta-concluida');
                         acoesCell.innerHTML = '<i class="fas fa-check" style="color: #27ae60; font-size: 1.2rem;"></i>';
@@ -518,8 +913,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="kebab-menu">
                                 <button class="kebab-btn"><i class="fas fa-ellipsis-v"></i></button>
                                 <div class="dropdown-content">
-                                    <a href="#" class="btn-editar-proposta">Editar</a>
-                                    <a href="#" class="btn-concluir-proposta">Marcar como concluído</a>
+                                    <a href="#" class="btn-editar-proposta"><i class="fas fa-edit"></i> Editar</a>
+                                    <a href="#" class="btn-exportar-pdf"><i class="fas fa-file-pdf"></i> Exportar PDF</a>
+                                    <a href="#" class="btn-concluir-proposta"><i class="fas fa-check"></i> Concluir</a>
                                 </div>
                             </div>
                         `;
@@ -530,32 +926,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">Erro ao carregar dados.</td></tr>';
             }
         };
+
         propostasTable.addEventListener('click', (e) => {
             e.preventDefault(); 
             const target = e.target;
+            const btn = target.closest('a');
             const row = target.closest('tr');
-            if (!row) return;
-            if (row.classList.contains('proposta-concluida')) {
-                return; 
+            
+            if (target.closest('.kebab-btn')) {
+                const menu = target.closest('.kebab-menu');
+                document.querySelectorAll('.kebab-menu.open').forEach(m => {
+                    if (m !== menu) m.classList.remove('open');
+                });
+                menu.classList.toggle('open');
+                return;
             }
+
+            if (!btn || !row) return;
             const id = parseInt(row.getAttribute('data-proposta-id'));
-            if (target.classList.contains('btn-editar-proposta')) {
+            
+            if (btn.classList.contains('btn-editar-proposta')) {
                 window.location.href = `/cadastro-proposta.html?editId=${id}`;
             }
-            if (target.classList.contains('btn-concluir-proposta')) {
-                if (confirm(`Tem certeza que deseja marcar a proposta "${row.cells[0].textContent}" como concluída?`)) {
+            
+            if (btn.classList.contains('btn-exportar-pdf')) {
+                document.querySelectorAll('.kebab-menu.open').forEach(menu => menu.classList.remove('open'));
+                gerarPDFProposta(id);
+            }
+
+            if (btn.classList.contains('btn-concluir-proposta')) {
+                if (confirm(`Tem certeza que deseja marcar a proposta como concluída?`)) {
                     marcarPropostaConcluida(id, row);
                 }
             }
-            if (target.closest('.kebab-btn')) {
-                document.querySelectorAll('.kebab-menu.open').forEach(menu => {
-                    if (menu !== target.closest('.kebab-menu')) {
-                        menu.classList.remove('open');
-                    }
-                });
-                target.closest('.kebab-menu').classList.toggle('open');
-            }
         });
+
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.kebab-menu')) {
                 document.querySelectorAll('.kebab-menu.open').forEach(menu => {
@@ -563,142 +968,362 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         });
+
         carregarPropostas();
     }
 
 
-    // ------------------------------------------------------------------
-    // --- NOVO: LÓGICA DA PÁGINA DE CONFIGURAÇÕES ---
-    // ------------------------------------------------------------------
-    const configForm = document.getElementById('config-form-geral');
-    if (configForm) {
-        let dadosOriginaisDaEmpresa = {}; // Armazena os dados carregados
-        const saveBar = document.getElementById('save-bar');
-        const saveButton = document.getElementById('save-config-btn');
-        const cancelButton = document.getElementById('cancel-config-btn');
-        const inputs = configForm.querySelectorAll('input, select, textarea');
+    // --- LÓGICA DE CONFIGURAÇÕES (NOVA) ---
+    if (window.location.pathname.includes('configuracoes.html')) {
+        
+        // 1. Alternância de Abas
+        const tabLinks = document.querySelectorAll('.config-tab-link');
+        const tabContents = document.querySelectorAll('.config-tab-content');
 
-        // --- 1. Lógica de Salvar/Cancelar ---
-        const mostrarSaveBar = () => {
-            if (saveBar) saveBar.classList.add('visible');
-        };
-        const esconderSaveBar = () => {
-            if (saveBar) saveBar.classList.remove('visible');
-        };
-
-        // Monitora qualquer mudança nos inputs
-        const monitorarMudancas = () => {
-            inputs.forEach(input => {
-                input.addEventListener('input', mostrarSaveBar);
+        if (tabLinks.length > 0) {
+            tabLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    // Reseta todas as abas
+                    tabLinks.forEach(l => l.classList.remove('active'));
+                    tabContents.forEach(c => c.style.display = 'none');
+                    
+                    // Ativa a aba clicada
+                    link.classList.add('active');
+                    const targetId = link.getAttribute('data-target');
+                    const target = document.getElementById(targetId);
+                    if (target) target.style.display = 'block';
+                });
             });
-        };
+        }
 
-        // Função para preencher o formulário
-        const preencherFormulario = (dados) => {
-            for (const key in dados) {
-                const input = configForm.querySelector(`[name="${key}"]`);
-                if (input) {
-                    input.value = dados[key];
-                }
-            }
-        };
+        // 2. Switch de E-mail (Setor 1)
+        const emailSwitch = document.getElementById('emailNotification');
+        const emailContainer = document.getElementById('emailInputContainer');
+        
+        if (emailSwitch && emailContainer) {
+            // Verifica se já estava marcado (simulação)
+            const savedPref = localStorage.getItem('prefEmailNotify') === 'true';
+            emailSwitch.checked = savedPref;
+            emailContainer.style.display = savedPref ? 'block' : 'none';
 
-        // Carrega os dados da empresa
-        const carregarDadosEmpresa = async () => {
-            try {
-                const response = await fetch('/api/empresa');
-                if (!response.ok) throw new Error('Falha ao carregar dados da empresa');
-                dadosOriginaisDaEmpresa = await response.json();
-                preencherFormulario(dadosOriginaisDaEmpresa);
-                // Começa a monitorar *depois* que os dados são carregados
-                monitorarMudancas(); 
-            } catch (error) {
-                console.error(error);
-                alert('Não foi possível carregar as configurações da empresa.');
-            }
-        };
-
-        // Ação do Botão Cancelar
-        if (cancelButton) {
-            cancelButton.addEventListener('click', () => {
-                if (confirm('Descartar alterações não salvas?')) {
-                    preencherFormulario(dadosOriginaisDaEmpresa); // Restaura dados originais
-                    esconderSaveBar();
+            emailSwitch.addEventListener('change', (e) => {
+                emailContainer.style.display = e.target.checked ? 'block' : 'none';
+                localStorage.setItem('prefEmailNotify', e.target.checked);
+                if (e.target.checked) {
+                    setTimeout(() => document.getElementById('notificationEmail')?.focus(), 100);
                 }
             });
         }
 
-        // Ação do Botão Salvar
-        if (saveButton) {
-            saveButton.addEventListener('click', async () => {
-                // Validação de campos obrigatórios
-                let formularioValido = true;
-                inputs.forEach(input => {
-                    // Limpa bordas de erro antigas
-                    input.style.borderColor = '#4a627a';
-                    // Checa se é obrigatório e está vazio
-                    if (input.hasAttribute('required') && input.value.trim() === "") {
-                        formularioValido = false;
-                        input.style.borderColor = '#e74c3c'; // Destaca o campo inválido
-                    }
-                });
+        // 3. Entrar no Ambiente de Teste (Setor 2)
+        const btnEnterTest = document.getElementById('btnEnterTestEnv');
+        if (btnEnterTest) {
+            btnEnterTest.addEventListener('click', () => {
+                if(confirm('Tem certeza que deseja entrar no Ambiente de Teste?')) {
+                    localStorage.setItem('isTestEnv', 'true');
+                    window.location.reload();
+                }
+            });
+        }
 
-                if (!formularioValido) {
-                    alert('Por favor, preencha todos os campos obrigatórios (destacados em vermelho).');
+        // 4. Upload de Certificado Digital (Setor 3)
+        const btnUploadCert = document.getElementById('btn-upload-certificado');
+        const inputCert = document.getElementById('input-certificado');
+        const modalCert = document.getElementById('modal-certificado');
+        const btnConfirmCert = document.getElementById('btn-confirmar-cert');
+        const btnCancelCert = document.getElementById('btn-cancelar-cert');
+
+        // Ação do botão "Selecionar Certificado"
+        if (btnUploadCert && inputCert) {
+            btnUploadCert.addEventListener('click', () => inputCert.click());
+            
+            inputCert.addEventListener('change', () => {
+                if (inputCert.files.length > 0 && modalCert) {
+                    modalCert.style.display = 'flex'; // Abre o modal simulado
+                }
+            });
+        }
+
+        // Ações do Modal
+        if (modalCert) {
+            if (btnConfirmCert) {
+                btnConfirmCert.addEventListener('click', () => {
+                    modalCert.style.display = 'none';
+                    alert('Certificado cadastrado com sucesso!');
+                });
+            }
+            if (btnCancelCert) {
+                btnCancelCert.addEventListener('click', () => {
+                    modalCert.style.display = 'none';
+                    inputCert.value = ''; // Limpa a seleção
+                });
+            }
+        }
+
+        // 5. Configurações Operacionais (Validade e Numeração)
+        const validadeInput = document.getElementById('validadePadrao');
+        const numeracaoSwitch = document.getElementById('numeracaoAuto');
+
+        if (validadeInput || numeracaoSwitch) {
+            // Carregar configurações salvas ao abrir a tela
+            fetch('/api/configuracoes/operacional')
+                .then(r => r.json())
+                .then(config => {
+                    if (validadeInput) validadeInput.value = config.validadePadrao || '';
+                    if (numeracaoSwitch) numeracaoSwitch.checked = config.numeracaoAuto || false;
+                })
+                .catch(e => console.log('Sem config operacional salva'));
+
+            // Salvar ao alterar Validade
+            if (validadeInput) {
+                validadeInput.addEventListener('change', (e) => {
+                    sendData('configuracoes/operacional', { validadePadrao: e.target.value });
+                });
+            }
+
+            // Salvar ao alterar Numeração Automática
+            if (numeracaoSwitch) {
+                numeracaoSwitch.addEventListener('change', (e) => {
+                    sendData('configuracoes/operacional', { numeracaoAuto: e.target.checked });
+                });
+            }
+        }
+    }
+
+    // --- LÓGICA GLOBAL: AMBIENTE DE TESTE (Executa em TODAS as páginas) ---
+    if (localStorage.getItem('isTestEnv') === 'true') {
+        // 1. Indicador Visual (Borda Laranja no Topo)
+        document.body.style.borderTop = '5px solid #E67E22';
+
+        // 2. Gerenciar Botão Flutuante de Sair
+        let btnExit = document.getElementById('btn-sair-teste');
+        
+        // Se o botão não existir no HTML da página atual, cria dinamicamente via JS
+        if (!btnExit) {
+            btnExit = document.createElement('button');
+            btnExit.id = 'btn-sair-teste';
+            btnExit.className = 'floating-test-btn'; // Usa a classe do CSS
+            btnExit.innerHTML = '<i class="fas fa-times-circle"></i> Sair do Ambiente de Teste';
+            // Garante estilos inline críticos caso o CSS não carregue a classe
+            btnExit.style.cssText = "position: fixed; bottom: 20px; right: 20px; background: #c0392b; color: white; border: none; padding: 12px 20px; border-radius: 30px; cursor: pointer; z-index: 9999; font-weight: bold; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);";
+            document.body.appendChild(btnExit);
+        }
+        
+        btnExit.style.display = 'flex';
+        
+        btnExit.addEventListener('click', () => {
+            if(confirm('Deseja sair do modo de teste e voltar para a produção?')) {
+                localStorage.setItem('isTestEnv', 'false');
+                window.location.reload();
+            }
+        });
+    }
+
+    // --- LÓGICA DO MENU DESLIZANTE (FLYOUT) ---
+    const sidebar = document.querySelector('.sidebar');
+    const toggleBtn = document.getElementById('sidebar-toggle');
+    const bodyContainer = document.querySelector('.sidebar-container');
+
+    if (sidebar && toggleBtn && bodyContainer) {
+        let isPinned = localStorage.getItem('sidebarPinned') === 'true';
+
+        // Função para aplicar o estado (expandido ou não)
+        const aplicarEstadoSidebar = () => {
+            if (isPinned) {
+                bodyContainer.classList.add('sidebar-expanded');
+                sidebar.classList.add('expanded');
+            } else {
+                bodyContainer.classList.remove('sidebar-expanded');
+                sidebar.classList.remove('expanded');
+            }
+        };
+
+        // Aplica o estado salvo ao carregar a página
+        aplicarEstadoSidebar();
+
+        // 1. Lógica do Clique no Botão (Travar/Soltar)
+        toggleBtn.addEventListener('click', () => {
+            isPinned = !isPinned; // Inverte o estado
+            localStorage.setItem('sidebarPinned', isPinned); // Salva a preferência
+            aplicarEstadoSidebar();
+        });
+
+        // 2. Lógica do Mouse Enter (Expandir)
+        sidebar.addEventListener('mouseenter', () => {
+            if (!isPinned) {
+                bodyContainer.classList.add('sidebar-expanded');
+                sidebar.classList.add('expanded');
+            }
+        });
+
+        // 3. Lógica do Mouse Leave (Encolher)
+        sidebar.addEventListener('mouseleave', () => {
+            if (!isPinned) {
+                bodyContainer.classList.remove('sidebar-expanded');
+                sidebar.classList.remove('expanded');
+            }
+        });
+    }
+
+// ============================================================
+    // LÓGICA DE CLIENTES E FORNECEDORES (Versão Final Otimizada)
+    // ============================================================
+    
+    // 1. TELA DE LISTAGEM (clientes.html)
+    const clientesTable = document.getElementById('clientesTable');
+    if (clientesTable) {
+        const carregarClientes = async () => {
+            const tbody = clientesTable.querySelector('tbody');
+            try {
+                const response = await fetch('/api/clientes');
+                const lista = await response.json();
+                tbody.innerHTML = '';
+                
+                if (lista.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #aaa;">Nenhum contato cadastrado.</td></tr>';
                     return;
                 }
 
-                // Coleta os dados
-                const formData = new FormData(configForm);
-                const novosDados = Object.fromEntries(formData.entries());
+                lista.forEach(cliente => {
+                    const row = tbody.insertRow();
+                    
+                    row.insertCell().innerHTML = `<strong>${cliente.nome}</strong><br><small style="color:#7a7a9d">${cliente.ruc || ''}</small>`;
+                    row.insertCell().textContent = cliente.apelido || '-';
+                    row.insertCell().textContent = cliente.telefone || '-';
+                    
+                    const tipoCell = row.insertCell();
+                    let corTipo = '#7f8c8d'; 
+                    let icone = 'fa-question';
+                    if(cliente.tipo === 'Cliente') { corTipo = '#27ae60'; icone = 'fa-user-tie'; }
+                    if(cliente.tipo === 'Fornecedor') { corTipo = '#E67E22'; icone = 'fa-truck'; }
+                    if(cliente.tipo === 'Funcionario') { corTipo = '#2980b9'; icone = 'fa-id-badge'; }
+                    tipoCell.innerHTML = `<span style="background-color: ${corTipo}; color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 5px;"><i class="fas ${icone}"></i> ${cliente.tipo}</span>`;
+                    
+                    const enderecoCompleto = `${cliente.endereco}, ${cliente.numero} - ${cliente.pais}`;
+                    row.insertCell().textContent = enderecoCompleto;
 
-                try {
-                    const response = await fetch('/api/empresa', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(novosDados)
-                    });
-
-                    if (!response.ok) throw new Error('Falha ao salvar');
-
-                    alert('Configurações salvas com sucesso!');
-                    dadosOriginaisDaEmpresa = novosDados; // Atualiza os dados originais
-                    esconderSaveBar();
-
-                } catch (error) {
-                    console.error(error);
-                    alert('Erro ao salvar as configurações.');
-                }
-            });
-        }
-
-        // --- 2. Lógica do Tamanho da Fonte ---
-        const btnDecrease = document.getElementById('font-decrease');
-        const btnIncrease = document.getElementById('font-increase');
-
-        const mudarTamanhoFonte = (direcao) => {
-            const root = document.documentElement;
-            // Pega o valor atual, remove o '%' e converte para número
-            let tamanhoAtualCSS = getComputedStyle(root).getPropertyValue('--base-font-size-percent').trim().replace('%', '');
-            let tamanhoAtual = parseInt(tamanhoAtualCSS || '100');
-
-            if (direcao === 'increase' && tamanhoAtual < 130) { // Limite máximo
-                tamanhoAtual += 10;
-            } else if (direcao === 'decrease' && tamanhoAtual > 70) { // Limite mínimo
-                tamanhoAtual -= 10;
+                    const acoesCell = row.insertCell();
+                    acoesCell.style.textAlign = 'center';
+                    acoesCell.innerHTML = `
+                        <button type="button" class="btn-editar-cliente" data-id="${cliente.id}" style="background:none; border:none; color:#f39c12; cursor:pointer; font-size: 1.1rem; margin-right: 10px;" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" class="btn-excluir-cliente" data-id="${cliente.id}" data-nome="${cliente.nome}" style="background:none; border:none; color:#e74c3c; cursor:pointer; font-size: 1.1rem;" title="Excluir">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+                });
+            } catch (error) {
+                console.error(error);
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #e74c3c;">Erro ao carregar dados. Verifique se o servidor está rodando.</td></tr>';
             }
-            
-            root.style.setProperty('--base-font-size-percent', `${tamanhoAtual}%`);
-            localStorage.setItem('fontSize', tamanhoAtual.toString());
-            mostrarSaveBar(); // Alterar a fonte também é uma "mudança"
         };
 
-        if (btnIncrease && btnDecrease) {
-            btnIncrease.addEventListener('click', () => mudarTamanhoFonte('increase'));
-            btnDecrease.addEventListener('click', () => mudarTamanhoFonte('decrease'));
+        // Delegação de Eventos (Melhor performance e evita bugs de clique)
+        clientesTable.addEventListener('click', async (e) => {
+            const btnEdit = e.target.closest('.btn-editar-cliente');
+            const btnDel = e.target.closest('.btn-excluir-cliente');
+
+            // Editar
+            if (btnEdit) {
+                const id = btnEdit.getAttribute('data-id');
+                window.location.href = `/cadastro-cliente.html?editId=${id}`;
+            }
+
+            // Excluir
+            if (btnDel) {
+                const id = btnDel.getAttribute('data-id');
+                const nome = btnDel.getAttribute('data-nome');
+                if (confirm(`Tem certeza que deseja excluir "${nome}"?`)) {
+                    try {
+                        const res = await fetch(`/api/clientes/${id}`, { method: 'DELETE' });
+                        if (res.ok) {
+                            alert('Cadastro excluído!');
+                            carregarClientes();
+                        } else {
+                            alert('Erro ao excluir. Talvez o servidor tenha reiniciado?');
+                        }
+                    } catch (err) {
+                        alert('Erro de conexão.');
+                    }
+                }
+            }
+        });
+
+        carregarClientes();
+    }
+
+    // 2. TELA DE FORMULÁRIO (cadastro-cliente.html)
+    const clienteForm = document.getElementById('cadastro-cliente-form');
+    if (clienteForm) {
+        const hiddenId = document.getElementById('clienteId');
+        const submitBtn = document.getElementById('cliente-submit-btn');
+        
+        // Verifica se é edição
+        const urlParams = new URLSearchParams(window.location.search);
+        const editId = urlParams.get('editId');
+        
+        if(editId) {
+            document.querySelector('.header-title h1').textContent = 'Editar Cadastro';
+            if(submitBtn) submitBtn.textContent = 'Salvar Alterações';
+            if(hiddenId) hiddenId.value = editId;
+            
+            // Carrega dados
+            fetch(`/api/clientes/${editId}`)
+                .then(r => {
+                    if(!r.ok) throw new Error("Cliente não encontrado (Servidor reiniciou?)");
+                    return r.json();
+                })
+                .then(data => {
+                    // Preenche campos
+                    const inputs = clienteForm.querySelectorAll('input:not([type=radio]), select, textarea');
+                    inputs.forEach(input => {
+                        if (data[input.name]) input.value = data[input.name];
+                    });
+                    // Preenche Tipo
+                    const radios = clienteForm.querySelectorAll('input[type="radio"][name="tipo"]');
+                    radios.forEach(radio => {
+                        if (radio.value === data.tipo) radio.checked = true;
+                    });
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Erro: Cliente não encontrado. Se você reiniciou o servidor, os dados foram limpos.");
+                    window.location.href = '/clientes.html';
+                });
         }
 
-        // --- 3. Carregamento Inicial ---
-        carregarDadosEmpresa();
+        // Salvar
+        clienteForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(clienteForm);
+            const data = Object.fromEntries(formData.entries());
+            
+            // ID para edição
+            if (hiddenId && hiddenId.value) {
+                data.id = hiddenId.value;
+            }
+
+            try {
+                const res = await fetch('/cadastrar-cliente', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                if(res.ok) {
+                    alert('Salvo com sucesso!');
+                    window.location.href = '/clientes.html';
+                } else {
+                    alert('Erro ao salvar.');
+                }
+            } catch(err) {
+                console.error(err);
+                alert('Erro de conexão.');
+            }
+        });
     }
+
 });

@@ -7,10 +7,11 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<body class="dashboard-page">
+<body class="dashboard-page sidebar-container">
 
     <div class="dashboard-container">
         
+        <!-- Header -->
         <header class="header-main">
             <div class="header-logo">
                 <a href="/dashboard.html" class="header-logo-link">
@@ -22,9 +23,22 @@
             </div>
         </header>
 
+        <!-- Sidebar Principal -->
         <aside class="sidebar">
-            <div class="user-profile">
-                <div class="user-icon"><i class="fas fa-user-circle"></i></div>
+            <button class="sidebar-toggle" id="sidebar-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <div class="header-logo" style="display: none;">
+                <a href="/dashboard.html" class="header-logo-link">
+                    <h2>SRC Centrífugas</h2>
+                </a>
+            </div>
+
+             <div class="user-profile clickable" id="user-profile-btn">
+                <div class="user-icon">
+                    <img src="placeholder-avatar.png" alt="Foto do Perfil" id="sidebar-profile-pic" class="profile-pic-avatar">
+                </div>
                 <div class="user-details">
                     <h3>Rodrigo A.</h3>
                     <p>rodrigogteste@gmail.com</p>
@@ -32,143 +46,356 @@
             </div>
             <nav class="sidebar-nav">
                 <ul>
-                    <li><a href="/configuracoes.html" class="active"><i class="fas fa-cog"></i> Configurações da Conta</a></li>
-                    <li><a href="#"><i class="fas fa-key"></i> Mudar a senha</a></li>
+                    <li><a href="/configuracoes.html" class="active"><i class="fas fa-cog"></i> <span>Configurações da Conta</span></a></li>
+                    <li><a href="#"><i class="fas fa-key"></i> <span>Mudar a senha</span></a></li>
                     <li class="nav-separator"></li> 
-                    <li><a href="/cadastro-produto.html"><i class="fas fa-plus-circle"></i> Cadastro de Produtos</a></li>
-                    <li><a href="/estoque.html"><i class="fas fa-warehouse"></i> Estoque</a></li>
-                    <li><a href="/propostas.html"><i class="fas fa-file-invoice-dollar"></i> Propostas Comerciais</a></li>
+                    <li><a href="/cadastro-produto.html"><i class="fas fa-plus-circle"></i> <span>Cadastro de Produtos</span></a></li>
+                    <li><a href="/estoque.html"><i class="fas fa-warehouse"></i> <span>Estoque</span></a></li>
+                    <li><a href="/propostas.html"><i class="fas fa-file-invoice-dollar"></i> <span>Propostas Comerciais</span></a></li>
+                    <li><a href="/clientes.html"><i class="fas fa-users"></i> <span>Clientes e Fornecedores</span></a></li>
                     <li class="nav-separator"></li>
-                    <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> Sair</a></li>
+                    <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> <span>Sair</span></a></li>
                 </ul>
             </nav>
         </aside> 
 
-        <main class="main-content">
+        <!-- Conteúdo Principal -->
+        <main class="main-content" id="main-content">
             
             <div class="config-container">
                 
+                <!-- Menu Lateral Secundário (Abas de Configuração) -->
                 <aside class="config-sidebar">
                     <nav class="config-sidebar-nav">
                         <ul>
-                            <li><a href="#" class="active"><i class="fas fa-tools"></i> Geral</a></li>
-                            <li><a href="#"><i class="fas fa-id-card"></i> Cadastro</a></li>
-                            <li><a href="#"><i class="fas fa-cogs"></i> Operacional</a></li>
-                            <li><a href="#"><i class="fas fa-dollar-sign"></i> Financeiro</a></li>
-                            <li><a href="#"><i class="fas fa-save"></i> Backups</a></li>
-                            <li><a href="#"><i class="fas fa-users"></i> Contas</a></li>
+                            <!-- IDs e data-target para o JS trocar as abas -->
+                            <li><a href="#" class="config-tab-link active" data-target="tab-geral"><i class="fas fa-tools"></i> Geral</a></li>
+                            <li><a href="#" class="config-tab-link" data-target="tab-cadastro"><i class="fas fa-id-card"></i> Cadastro</a></li>
+                            <li><a href="#" class="config-tab-link" data-target="tab-operacional"><i class="fas fa-cogs"></i> Operacional</a></li>
+                            <li><a href="#" class="config-tab-link" data-target="tab-financeiro"><i class="fas fa-dollar-sign"></i> Financeiro</a></li>
+                            <li><a href="#" class="config-tab-link" data-target="tab-backups"><i class="fas fa-save"></i> Backups</a></li>
+                            <li><a href="#" class="config-tab-link" data-target="tab-contas"><i class="fas fa-users"></i> Contas</a></li>
                         </ul>
                     </nav>
                 </aside>
                 
-                <div class="config-content">
-                    <form id="config-form-geral">
-                        
-                        <div class="config-section">
-                            <h3>Geral</h3>
-                            <div class="form-group">
-                                <label>Tamanho da Fonte</label>
-                                <div class="font-control">
-                                    <button type="button" class="font-control-btn" id="font-decrease"><i class="fas fa-search-minus"></i></button>
-                                    <button type="button" class="font-control-btn" id="font-increase"><i class="fas fa-search-plus"></i></button>
+                <!-- Conteúdo das Abas (Wrapper) -->
+                <div class="config-content-wrapper">
+                    
+                    <!-- ABA 1: GERAL -->
+                    <div id="tab-geral" class="config-tab-content active">
+                        <form id="config-form-geral">
+                            <div class="config-section">
+                                <h3>Geral</h3>
+                                <div class="form-group">
+                                    <label>Tamanho da Fonte</label>
+                                    <div class="font-control">
+                                        <button type="button" class="font-control-btn" id="font-decrease"><i class="fas fa-search-minus"></i></button>
+                                        <button type="button" class="font-control-btn" id="font-increase"><i class="fas fa-search-plus"></i></button>
+                                    </div>
+                                </div>
+                                 <div class="form-group">
+                                    <label for="idioma">Idioma do Sistema</label>
+                                    <select id="idioma" name="idioma">
+                                        <option value="pt-br">Português (Brasil)</option>
+                                        <option value="en-us" disabled>Inglês (Em breve)</option>
+                                        <option value="es" disabled>Espanhol (Em breve)</option>
+                                    </select>
                                 </div>
                             </div>
-                             <div class="form-group">
-                                <label for="idioma">Idioma do Sistema</label>
-                                <select id="idioma" name="idioma">
-                                    <option value="pt-br">Português (Brasil)</option>
-                                    <option value="en-us" disabled>Inglês (Em breve)</option>
-                                    <option value="es" disabled>Espanhol (Em breve)</option>
-                                </select>
-                            </div>
-                        </div>
 
-                        <div class="config-section">
-                            <h3>Dados da Empresa</h3>
-                            <div class="form-row">
-                                <div class="form-group" style="flex-basis: 100%;">
-                                    <label for="logoUrl">URL do Logo</label>
-                                    <input type="text" id="logoUrl" name="logoUrl" placeholder="https://.../logo.png">
+                            <div class="config-section">
+                                <h3>Dados da Empresa</h3>
+                                <div class="form-row">
+                                    <div class="form-group" style="flex-basis: 100%;">
+                                        <label for="logoUrl">URL do Logo</label>
+                                        <input type="text" id="logoUrl" name="logoUrl" placeholder="https://.../logo.png">
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="nomeEmpresa">Nome da Empresa (Obrigatório)</label>
-                                    <input type="text" id="nomeEmpresa" name="nomeEmpresa" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="nomeFantasia">Nome Fantasia (Obrigatório)</label>
-                                    <input type="text" id="nomeFantasia" name="nomeFantasia" required>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="razaoSocial">Razão Social (Obrigatório)</label>
-                                <input type="text" id="razaoSocial" name="razaoSocial" required>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="cnpj">CNPJ (Obrigatório)</label>
-                                    <input type="text" id="cnpj" name="cnpj" required>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="nomeEmpresa">Nome da Empresa (Obrigatório)</label>
+                                        <input type="text" id="nomeEmpresa" name="nomeEmpresa" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="nomeFantasia">Nome Fantasia (Obrigatório)</label>
+                                        <input type="text" id="nomeFantasia" name="nomeFantasia" required>
+                                    </div>
                                 </div>
                                 <div class="form-group">
-                                    <label for="inscricaoEstadual">Inscrição Estadual</label>
-                                    <input type="text" id="inscricaoEstadual" name="inscricaoEstadual">
+                                    <label for="razaoSocial">Razão Social (Obrigatório)</label>
+                                    <input type="text" id="razaoSocial" name="razaoSocial" required>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="cnpj">CNPJ (Obrigatório)</label>
+                                        <input type="text" id="cnpj" name="cnpj" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inscricaoEstadual">Inscrição Estadual</label>
+                                        <input type="text" id="inscricaoEstadual" name="inscricaoEstadual">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="atividadePrincipal">Atividade Principal</label>
+                                    <input type="text" id="atividadePrincipal" name="atividadePrincipal">
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label for="atividadePrincipal">Atividade Principal</label>
-                                <input type="text" id="atividadePrincipal" name="atividadePrincipal">
-                            </div>
-                        </div>
 
-                        <div class="config-section">
-                            <h3>Endereço</h3>
-                            <div class="form-row">
-                                <div class="form-group" style="flex: 3;"> <label for="enderecoRua">Rua</label>
-                                    <input type="text" id="enderecoRua" name="enderecoRua">
+                            <div class="config-section">
+                                <h3>Endereço</h3>
+                                <div class="form-row">
+                                    <div class="form-group" style="flex: 3;">
+                                        <label for="enderecoRua">Rua</label>
+                                        <input type="text" id="enderecoRua" name="enderecoRua">
+                                    </div>
+                                    <div class="form-group" style="flex: 1;">
+                                        <label for="enderecoNumero">Número</label>
+                                        <input type="text" id="enderecoNumero" name="enderecoNumero">
+                                    </div>
                                 </div>
-                                <div class="form-group" style="flex: 1;"> <label for="enderecoNumero">Número</label>
-                                    <input type="text" id="enderecoNumero" name="enderecoNumero">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="enderecoBairro">Bairro</label>
+                                        <input type="text" id="enderecoBairro" name="enderecoBairro">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="enderecoComplemento">Complemento</label>
+                                        <input type="text" id="enderecoComplemento" name="enderecoComplemento">
+                                    </div>
                                 </div>
                             </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="enderecoBairro">Bairro</label>
-                                    <input type="text" id="enderecoBairro" name="enderecoBairro">
-                                </div>
-                                <div class="form-group">
-                                    <label for="enderecoComplemento">Complemento</label>
-                                    <input type="text" id="enderecoComplemento" name="enderecoComplemento">
-                                </div>
-                            </div>
-                        </div>
 
-                         <div class="config-section">
-                            <h3>Contato</h3>
-                             <div class="form-row">
-                                <div class="form-group">
-                                    <label for="telefone">Telefone (Obrigatório)</label>
-                                    <input type="text" id="telefone" name="telefone" required>
+                             <div class="config-section">
+                                <h3>Contato</h3>
+                                 <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="telefone">Telefone (Obrigatório)</label>
+                                        <input type="text" id="telefone" name="telefone" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="email">E-mail (Obrigatório)</label>
+                                        <input type="email" id="email" name="email" required>
+                                    </div>
                                 </div>
                                 <div class="form-group">
-                                    <label for="email">E-mail (Obrigatório)</label>
-                                    <input type="email" id="email" name="email" required>
+                                    <label for="site">Site</label>
+                                    <input type="text" id="site" name="site" placeholder="https://www.exemplo.com">
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label for="site">Site</label>
-                                <input type="text" id="site" name="site" placeholder="https://www.exemplo.com">
-                            </div>
-                        </div>
+                        </form>
+                    </div>
 
-                    </form>
-                </div> </div> </main>
+                    <!-- ABA 2: CADASTRO (CORRIGIDA E INDEPENDENTE) -->
+                    <div id="tab-cadastro" class="config-tab-content" style="display: none;">
+                        <form id="config-form-cadastro">
+                            
+                            <!-- Setor 1: Cadastros Gerais -->
+                            <div class="config-section">
+                                <h3>Cadastros Gerais</h3>
+                                <div class="form-group checkbox-group">
+                                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                                        <label for="emailNotification" style="margin:0; cursor: pointer; font-weight: 500;">Ativar aviso de cadastro de produtos por e-mail</label>
+                                        <label class="switch">
+                                            <input type="checkbox" id="emailNotification">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <!-- Campo condicional -->
+                                    <div id="emailInputContainer" style="display: none; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 6px; border-left: 4px solid #003366;">
+                                        <label for="notificationEmail" style="display: block; margin-bottom: 5px; font-size: 0.9rem;">E-mail para notificação:</label>
+                                        <input type="email" id="notificationEmail" placeholder="exemplo@src.com.br" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Setor 2: Permissões e Ambientes -->
+                            <div class="config-section">
+                                <h3>Permissões e Ambientes</h3>
+                                <div class="form-group">
+                                    <label for="defaultPermission">Permissão padrão para novos usuários:</label>
+                                    <div style="position: relative;">
+                                        <select id="defaultPermission" style="width: 100%; padding: 12px; border-radius: 4px; border: 1px solid #040404; appearance: none; background: white;">
+                                            <option value="funcionario">Permissão de Funcionário</option>
+                                            <option value="admin">Permissão de Administrador</option>
+                                            <option value="vip">Permissão VIP (Atlas)</option>
+                                        </select>
+                                        <i class="fas fa-chevron-down" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #666;"></i>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group" style="margin-top: 25px; background-color: #fff8e1; padding: 20px; border-radius: 8px; border: 1px solid #ffe0b2; display: flex; flex-direction: column; gap: 10px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <strong style="color: #e67e22; font-size: 1.1rem;"><i class="fas fa-flask"></i> Ambiente de Teste (Sandbox)</strong>
+                                    </div>
+                                    <p style="font-size: 0.9rem; color: #7f8c8d; line-height: 1.4;">
+                                        Ao entrar neste modo, você poderá testar todas as funcionalidades sem afetar os dados reais da empresa. É como um "simulador na nuvem".
+                                    </p>
+                                    <button type="button" id="btnEnterTestEnv" class="btn-primary" style="background-color: #e67e22; border: none; width: 100%; font-weight: bold; padding: 12px; margin-top: 5px; transition: background 0.2s;">
+                                        ENTRAR NO AMBIENTE DE TESTE
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Setor 3: Cadastro de Documentos Digitais -->
+                            <div class="config-section">
+                                <h3>Cadastro de Documentos Digitais</h3>
+                                <div class="form-group">
+                                    <label style="margin-bottom: 10px; display: block;">Certificado Digital (e-CNPJ / e-CPF)</label>
+                                    
+                                    <!-- Área de Upload Customizada -->
+                                    <div class="upload-area" style="border: 2px dashed #bdc3c7; padding: 40px 20px; text-align: center; border-radius: 8px; background: #fcfcfc; cursor: pointer; transition: all 0.3s;" onclick="document.getElementById('certInput').click()" onmouseover="this.style.borderColor='#003366'; this.style.background='#f0f4f8'" onmouseout="this.style.borderColor='#bdc3c7'; this.style.background='#fcfcfc'">
+                                        <i class="fas fa-cloud-upload-alt" style="font-size: 3rem; color: #95a5a6; margin-bottom: 15px;"></i>
+                                        <p style="margin-bottom: 5px; color: #2c3e50; font-weight: 600;">Clique para selecionar o arquivo .pfx</p>
+                                        <p style="font-size: 0.8rem; color: #7f8c8d;">O certificado deve estar instalado na máquina</p>
+                                        
+                                        <!-- Input invisível -->
+                                        <input type="file" id="certInput" accept=".pfx" style="display: none;">
+                                    </div>
+                                    
+                                    <!-- Feedback do arquivo selecionado -->
+                                    <div id="certFileFeedback" style="display: none; margin-top: 15px; padding: 10px; background: #e8f8f5; border: 1px solid #2ecc71; border-radius: 4px; color: #27ae60; align-items: center; gap: 10px;">
+                                        <i class="fas fa-check-circle"></i> <span id="certFileName">arquivo.pfx</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </form>
+                    </div>
+
+                    <!-- Outras abas (Placeholders) -->
+                   <!-- ABA 3: OPERACIONAL -->
+                    <div id="tab-operacional" class="config-tab-content" style="display: none;">
+                        <form id="config-form-operacional">
+                            <div class="config-section">
+                                <h3>Configurações de Propostas (Bloco 1)</h3>
+                                
+                                <!-- Validade Padrão -->
+                                <div class="form-group">
+                                    <label for="validadePadrao">Validade Padrão das Propostas (dias)</label>
+                                    <input type="number" id="validadePadrao" name="validadePadrao" placeholder="Ex: 15" min="1">
+                                    <p style="font-size: 0.8rem; color: #7a7a9d; margin-top: 5px;">
+                                        Define quantos dias a proposta vale. Após a data calculada, aparecerá como <span style="color: #e74c3c; font-weight: bold;">"Vencida"</span>.
+                                    </p>
+                                </div>
+
+                                <!-- Numeração Automática -->
+                                <div class="form-group checkbox-group" style="margin-top: 25px;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                                        <label for="numeracaoAuto" style="margin:0; cursor: pointer;">Numeração Automática de Referência</label>
+                                        <label class="switch">
+                                            <input type="checkbox" id="numeracaoAuto" name="numeracaoAuto">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <p style="font-size: 0.8rem; color: #7a7a9d; margin-top: 5px;">
+                                        Se ativado, o sistema preencherá o número da proposta automaticamente ao iniciar um novo cadastro.
+                                    </p>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div id="tab-financeiro" class="config-tab-content" style="display: none;"><p style="padding: 20px; color: #aaa;">Configurações Financeiras em breve...</p></div>
+                    <div id="tab-backups" class="config-tab-content" style="display: none;"><p style="padding: 20px; color: #aaa;">Backups em breve...</p></div>
+                    <div id="tab-contas" class="config-tab-content" style="display: none;"><p style="padding: 20px; color: #aaa;">Gerenciamento de Contas em breve...</p></div>
+
+                </div> 
+            </div> 
+        </main>
 
         <div class="save-bar" id="save-bar">
             <button type="button" class="btn-secondary" id="cancel-config-btn">Cancelar</button>
             <button type="button" class="btn-primary" id="save-config-btn">Salvar Alterações</button>
         </div>
 
+    </div>
+
+    <!-- Botão Flutuante de Sair do Modo de Teste (Inicialmente oculto) -->
+    <div id="btn-sair-teste" class="floating-test-btn" style="display: none;">
+        <i class="fas fa-times-circle"></i> Sair do Ambiente de Teste
+    </div>
+
+    <!-- Modal de Seleção de Certificado -->
+    <div id="modal-certificado" class="modal" style="display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center;">
+        <div class="modal-content" style="background-color: #fff; margin: 0; padding: 0; width: 450px; max-width: 90%; border-radius: 5px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); animation: fadeIn 0.2s ease-out;">
+            
+            <div style="padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-shield-alt" style="color: #666;"></i>
+                <h3 style="margin: 0; font-size: 1rem; color: #333; font-weight: normal;">Segurança do Windows</h3>
+            </div>
+            
+            <div style="padding: 20px; background-color: #f9f9f9;">
+                <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                    <div style="width: 60px; height: 60px; background: #eee; display: flex; align-items: center; justify-content: center;">
+                        <img src="https://via.placeholder.com/50" alt="Auth" style="width: 40px; opacity: 0.5;">
+                    </div>
+                    <div>
+                        <strong style="display: block; font-size: 1.1rem; margin-bottom: 5px;">Confirme o certificado</strong>
+                        <p style="margin: 0; font-size: 0.9rem; color: #666;">Selecione um certificado para autenticar em <strong>src-sistemas.com.br</strong></p>
+                    </div>
+                </div>
+
+                <div class="cert-list" style="border: 1px solid #ccc; background: white; max-height: 150px; overflow-y: auto;">
+                    <div id="cert-item-simulado" style="padding: 10px; display: flex; align-items: center; gap: 10px; cursor: pointer; border-bottom: 1px solid #eee;" onmouseover="this.style.background='#eef'" onmouseout="this.style.background='#fff'">
+                        <i class="fas fa-id-card" style="font-size: 1.5rem; color: #f39c12;"></i>
+                        <div>
+                            <strong style="display: block; font-size: 0.9rem;">RODRIGO ARAGAO:00000000000</strong>
+                            <span style="font-size: 0.8rem; color: #888;">Emissor: AC SAFEWEB RFB v5</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="padding: 15px 20px; background: #f0f0f0; border-top: 1px solid #ddd; display: flex; justify-content: flex-end; gap: 10px; border-radius: 0 0 5px 5px;">
+                <button id="btn-confirmar-cert" style="padding: 6px 25px; background: #0078d7; color: white; border: 1px solid #005a9e; border-radius: 2px; cursor: pointer;">OK</button>
+                <button id="btn-cancelar-cert" style="padding: 6px 25px; background: #e1e1e1; color: #000; border: 1px solid #adadad; border-radius: 2px; cursor: pointer;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Perfil -->
+    <div id="user-profile-modal" class="modal">
+        <input type="file" id="modal-profile-pic-input" accept="image/*" style="display: none;">
+        <input type="file" id="modal-payment-pdf-input" accept=".pdf" style="display: none;">
+        <div class="modal-content modal-profile-layout">
+            <span class="close-button" id="close-profile-modal-btn">&times;</span>
+            <div class="profile-header">
+                <div class="profile-avatar-container">
+                    <img src="placeholder-avatar.png" alt="Avatar" id="modal-profile-pic-avatar" class="profile-pic-avatar clickable">
+                    <div class="avatar-edit-overlay"><i class="fas fa-camera"></i></div>
+                </div>
+                <div class="profile-info">
+                    <h2 id="modal-title">Minha Conta (DEV001)</h2>
+                    <div class="detail-group inline">
+                        <p><i class="fas fa-user"></i><strong>Nome:</strong> <span data-detail="nome">Rodrigo A.</span></p>
+                        <p><i class="fas fa-envelope"></i><strong>E-mail:</strong> <span data-detail="email">rodrigogteste@gmail.com</span></p>
+                        <p><i class="fas fa-phone"></i><strong>Telefone:</strong> <span data-detail="telefone">(19) 99999-9999</span></p>
+                        <p><i class="fas fa-star"></i><strong>Plano:</strong> <span data-detail="plano" style="color: #E67E22; font-weight: bold;">Atlas VIP</span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="detail-section">
+                <h3><i class="fas fa-shield-alt"></i> Permissões (Plano Atlas VIP)</h3>
+                <ul class="permission-list">
+                    <li>Incluir e remover produtos</li>
+                    <li>Incluir e remover propostas</li>
+                    <li>Incluir e remover clientes</li>
+                    <li>Configurar ambiente de produção</li>
+                    <li>Alterar usuário e senha de terceiros</li>
+                    <li>Incluir e remover funcionários</li>
+                    <li>Alterar e remover cadastros gerais</li>
+                </ul>
+                <hr class="modal-separator">
+                <h3><i class="fas fa-credit-card"></i> Dados de Pagamento</h3>
+                <div class="payment-status">
+                    <p>Status da Mensalidade: <span id="payment-status-text" class="status-pendente">Mensalidade Pendente</span></p>
+                    <p id="payment-file-name" class="payment-file-info"></p> <button class="btn-primary" id="btn-informar-pagamento">Informar Pagamento</button>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" id="btn-modal-logout">Sair da Conta</button>
+            </div>
+        </div>
     </div>
 
     <script src="main.js"></script>

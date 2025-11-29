@@ -1,95 +1,163 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard | SRC Centrífugas</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | SRC Centrífugas</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<body class="dashboard-page">
-  <div class="dashboard-container">
-    <header class="header-main">
-      <div class="header-logo">
-        <a href="/dashboard.html" class="header-logo-link">
-          <h2>SRC Centrífugas</h2>
-        </a>
-      </div>
-      <div class="header-title">
-        <h1>Painel de Vendas</h1>
-      </div>
-    </header>
-    <aside class="sidebar">
-      <div class="user-profile">
-        <div class="user-icon"><i class="fas fa-user-circle"></i></div>
-        <div class="user-details">
-          <h3>Rodrigo A.</h3>
-          <p>rodrigogteste@gmail.com</p>
-        </div>
-      </div>
-      <nav class="sidebar-nav">
-        <ul>
-                    <li><a href="/configuracoes.html"><i class="fas fa-cog"></i> Configurações da Conta</a></li>
-          <li><a href="#"><i class="fas fa-key"></i> Mudar a senha</a></li>
-          <li class="nav-separator"></li> 
-          <li><a href="/cadastro-produto.html"><i class="fas fa-plus-circle"></i> Cadastro de Produtos</a></li>
-          <li><a href="/estoque.html"><i class="fas fa-warehouse"></i> Estoque</a></li>
-          <li><a href="/propostas.html"><i class="fas fa-file-invoice-dollar"></i> Propostas Comerciais</a></li>
-          <li class="nav-separator"></li>
-          <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> Sair</a></li>
-        </ul>
-      </nav>
-    </aside> 
-    <main class="main-content">
-      <section class="summary-blocks">
-        
-          <div class="summary-card" id="total-vendas-mes">
-          <h4>Total de vendas (USD)</h4>
-          <span class="value">$ 0.00</span>
-          <span class="period">Este mês</span>
-        </div>
-        
-          <div class="summary-card">
-          <h4>NFe-s geradas no mês</h4>
-          <span class="value">0</span>
-          <span class="period">Este mês</span>
-        </div>
-        
-          <div class="summary-card" id="concluidos-mes-count">
-          <h4>Total de pedidos concluídos</h4>
-          <span class="value">0</span>
-          <span class="period">Este mês</span>
-play    </div>
+<body class="dashboard-page sidebar-container">
+  <div class="dashboard-container">
+    <header class="header-main">
+      <div class="header-logo">
+        <a href="/dashboard.html" class="header-logo-link">
+          <h2>SRC Centrífugas</h2>
+        </a>
+      </div>
+      <div class="header-title">
+        <h1>Painel de Vendas</h1>
+      </div>
+    </header>
+    <aside class="sidebar">
 
-        <div class="summary-card decorative" id="propostas-ativas-count"> 
-          <h4>Propostas Ativas</h4>
-          <span class="value">0</span>
-          <span class="period">Total</span>
-          <div class="card-chart-overlay">
-config.        <div class="chart-bar"></div>
-              <div class="chart-bar"></div>
-              <div class="chart-bar"></div>
-              <div class="chart-bar"></div>
-              <div class="chart-bar"></div>
-dot      </div>
-        </div>
-      </section>
+      <button class="sidebar-toggle" id="sidebar-toggle">
+          <i class="fas fa-bars"></i>
+      </button>
 
-      <section class="charts-section">
-        
-          <div class="chart-card" id="comparativo-vendas-mes">
-          <div class="card-header"><h4>Comparativo de vendas (USD)</h4></div>
-          <div class="card-body"><p class="placeholder-text">Sem dados para exibir.</p></div>
-        </div>
+      <div class="header-logo" style="display: none;">         <a href="/dashboard.html" class="header-logo-link">
+          <h2>SRC Centrífugas</h2>
+        </a>
+      </div>
 
-        <div class="chart-card">
-          <div class="card-header"><h4>Outro Indicador</h4></div>
-          <div class="card-body"><p class="placeholder-text">Sem dados para exibir.</p></div>
-        </div>
-      </section>
+      <div class="user-profile clickable" id="user-profile-btn">
+        <div class="user-icon">
+          <img src="placeholder-avatar.png" alt="Foto do Perfil" id="sidebar-profile-pic" class="profile-pic-avatar">
+        </div>
+        <div class="user-details">
+          <h3>Rodrigo A.</h3>
+          <p>rodrigogteste@gmail.com</p>
+        </div>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <ul>
+            <li><a href="/configuracoes.html"><i class="fas fa-cog"></i> <span>Configurações da Conta</span></a></li>
+          <li><a href="#"><i class="fas fa-key"></i> <span>Mudar a senha</span></a></li>
+          <li class="nav-separator"></li> 
+          <li><a href="/cadastro-produto.html"><i class="fas fa-plus-circle"></i> <span>Cadastro de Produtos</span></a></li>
+          <li><a href="/estoque.html"><i class="fas fa-warehouse"></i> <span>Estoque</span></a></li>
+          <li><a href="/propostas.html"><i class="fas fa-file-invoice-dollar"></i> <span>Propostas Comerciais</span></a></li>
+          <!-- NOVO ITEM ADICIONADO -->
+          <li><a href="/clientes.html"><i class="fas fa-users"></i> <span>Clientes e Fornecedores</span></a></li>
+          
+          <li class="nav-separator"></li>
+          <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> <span>Sair</span></a></li>
+        </ul>
+      </nav>
+    </aside> 
+    
+        <main class="main-content" id="main-content">
+      <section class="summary-blocks">
+        
+          <div class="summary-card" id="total-vendas-mes">
+          <h4>Total de vendas (USD)</h4>
+          <span class="value">$ 0.00</span>
+          <span class="period">Este mês</span>
+        </div>
+        
+          <div class="summary-card">
+          <h4>NFe-s geradas no mês</h4>
+          <span class="value">0</span>
+          <span class="period">Este mês</span>
+        </div>
+        
+          <div class="summary-card" id="concluidos-mes-count">
+          <h4>Total de pedidos concluídos</h4>
+          <span class="value">0</span>
+          <span class="period">Este mês</span>
+        </div>
 
-    </main>
-  </div>
-  <script src="main.js"></script>
+        <div class="summary-card decorative" id="propostas-ativas-count"> 
+          <h4>Propostas Ativas</h4>
+          <span class="value">0</span>
+          <span class="period">Total</span>
+          <div class="card-chart-overlay">
+              <div class="chart-bar"></div>
+              <div class="chart-bar"></div>
+              <div class="chart-bar"></div>
+              <div class="chart-bar"></div>
+              <div class="chart-bar"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="charts-section">
+        
+          <div class="chart-card" id="comparativo-vendas-mes">
+          <div class="card-header"><h4>Comparativo de vendas (USD)</h4></div>
+          <div class="card-body"><p class="placeholder-text">Sem dados para exibir.</p></div>
+        </div>
+
+        <div class="chart-card">
+          <div class="card-header"><h4>Outro Indicador</h4></div>
+          <div class="card-body"><p class="placeholder-text">Sem dados para exibir.</p></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <div id="user-profile-modal" class="modal">
+    <input type="file" id="modal-profile-pic-input" accept="image/*" style="display: none;">
+    <input type="file" id="modal-payment-pdf-input" accept=".pdf" style="display: none;">
+
+    <div class="modal-content modal-profile-layout">
+        <span class="close-button" id="close-profile-modal-btn">&times;</span>
+        
+        <div class="profile-header">
+            <div class="profile-avatar-container">
+                <img src="placeholder-avatar.png" alt="Avatar" id="modal-profile-pic-avatar" class="profile-pic-avatar clickable">
+                <div class="avatar-edit-overlay"><i class="fas fa-camera"></i></div>
+            </div>
+            <div class="profile-info">
+                <h2 id="modal-title">Minha Conta (DEV001)</h2>
+                <div class="detail-group inline">
+                    <p><i class="fas fa-user"></i><strong>Nome:</strong> <span data-detail="nome">Rodrigo A.</span></p>
+                    <p><i class="fas fa-envelope"></i><strong>E-mail:</strong> <span data-detail="email">rodrigogteste@gmail.com</span></p>
+                    <p><i class="fas fa-phone"></i><strong>Telefone:</strong> <span data-detail="telefone">(19) 99999-9999</span></p>
+                    <p><i class="fas fa-star"></i><strong>Plano:</strong> <span data-detail="plano" style="color: #E67E22; font-weight: bold;">Atlas VIP</span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-section">
+            
+            <h3><i class="fas fa-shield-alt"></i> Permissões (Plano Atlas VIP)</h3>
+            <ul class="permission-list">
+                <li>Incluir e remover produtos</li>
+                <li>Incluir e remover propostas</li>
+                <li>Incluir e remover clientes</li>
+                <li>Configurar ambiente de produção</li>
+                <li>Alterar usuário e senha de terceiros</li>
+                <li>Incluir e remover funcionários</li>
+                <li>Alterar e remover cadastros gerais</li>
+            </ul>
+
+            <hr class="modal-separator">
+            
+            <h3><i class="fas fa-credit-card"></i> Dados de Pagamento</h3>
+            <div class="payment-status">
+                <p>Status da Mensalidade: <span id="payment-status-text" class="status-pendente">Mensalidade Pendente</span></p>
+                <p id="payment-file-name" class="payment-file-info"></p> <button class="btn-primary" id="btn-informar-pagamento">Informar Pagamento</button>
+            </div>
+        </div>
+        
+        <div class="modal-actions">
+            <button class="btn-secondary" id="btn-modal-logout">Sair da Conta</button>
+        </div>
+    </div>
+  </div>
+  <script src="main.js"></script>
 </body>
 </html>

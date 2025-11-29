@@ -6,8 +6,78 @@
     <title>Cadastro de Proposta | SRC Centrífugas</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Estilos específicos para a busca de produtos */
+        .dropdown-results {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: #2c3e50;
+            border: 1px solid #4a627a;
+            z-index: 1000;
+            max-height: 200px;
+            overflow-y: auto;
+            border-radius: 0 0 4px 4px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        .result-item {
+            padding: 10px;
+            color: #ecf0f1;
+            cursor: pointer;
+            border-bottom: 1px solid #3a3c53;
+            transition: background 0.2s;
+        }
+        .result-item:hover {
+            background-color: #34495e;
+            color: #E67E22;
+        }
+        /* Ajuste na tabela de itens */
+        #itensTable input {
+            background: transparent;
+            border: 1px solid #4a627a;
+            color: white;
+            padding: 5px;
+            border-radius: 4px;
+            width: 100%;
+            text-align: center;
+        }
+        #itensTable input:focus {
+            border-color: #E67E22;
+            outline: none;
+        }
+        .table-input-currency {
+            text-align: right !important;
+        }
+        /* Estilo do Cabeçalho de Informações Estáticas */
+        .static-info-box {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            font-size: 0.9rem;
+            color: #333;
+        }
+        .static-info-box h4 {
+            color: #E67E22;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            font-size: 1rem;
+            text-transform: uppercase;
+        }
+        .static-info-box p {
+            margin-bottom: 4px;
+            line-height: 1.4;
+        }
+    </style>
 </head>
-<body class="dashboard-page">
+<body class="dashboard-page sidebar-container">
     <div class="dashboard-container">
         <header class="header-main">
             <div class="header-logo">
@@ -20,8 +90,20 @@
             </div>
         </header>
         <aside class="sidebar">
-             <div class="user-profile">
-                <div class="user-icon"><i class="fas fa-user-circle"></i></div>
+            <button class="sidebar-toggle" id="sidebar-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <div class="header-logo" style="display: none;">
+                <a href="/dashboard.html" class="header-logo-link">
+                    <h2>SRC Centrífugas</h2>
+                </a>
+            </div>
+            
+             <div class="user-profile clickable" id="user-profile-btn">
+                <div class="user-icon">
+                    <img src="placeholder-avatar.png" alt="Foto do Perfil" id="sidebar-profile-pic" class="profile-pic-avatar">
+                </div>
                 <div class="user-details">
                     <h3>Rodrigo A.</h3>
                     <p>rodrigogteste@gmail.com</p>
@@ -29,59 +111,134 @@
             </div>
             <nav class="sidebar-nav">
                 <ul>
-                    <li><a href="/configuracoes.html"><i class="fas fa-cog"></i> Configurações da Conta</a></li>
-                    <li><a href="#"><i class="fas fa-key"></i> Mudar a senha</a></li>
+                    <li><a href="/configuracoes.html"><i class="fas fa-cog"></i> <span>Configurações da Conta</span></a></li>
+                    <li><a href="#"><i class="fas fa-key"></i> <span>Mudar a senha</span></a></li>
                     <li class="nav-separator"></li>
-                    <li><a href="/cadastro-produto.html"><i class="fas fa-plus-circle"></i> Cadastro de Produtos</a></li>
-                    <li><a href="/estoque.html"><i class="fas fa-warehouse"></i> Estoque</a></li>
-                    <li><a href="/propostas.html" class="active"><i class="fas fa-file-invoice-dollar"></i> Propostas Comerciais</a></li>
+                    <li><a href="/cadastro-produto.html"><i class="fas fa-plus-circle"></i> <span>Cadastro de Produtos</span></a></li>
+                    <li><a href="/estoque.html"><i class="fas fa-warehouse"></i> <span>Estoque</span></a></li>
+                    <li><a href="/propostas.html" class="active"><i class="fas fa-file-invoice-dollar"></i> <span>Propostas Comerciais</span></a></li>
+                    <li><a href="/clientes.html"><i class="fas fa-users"></i> <span>Clientes e Fornecedores</span></a></li>
                     <li class="nav-separator"></li>
-                    <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> Sair</a></li>
+                    <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> <span>Sair</span></a></li>
                 </ul>
             </nav>
         </aside>
-        <main class="main-content">
-            <div class="wizard-container">
+        
+        <main class="main-content" id="main-content">
+            <div class="wizard-container" style="max-width: 1200px;">
                 <form id="proposta-form">
                     <input type="hidden" name="id" id="propostaId">
-                    <h3>Dados da Proposta</h3>
-                    <div class="form-group">
-                        <label for="ordem_compra">Número de Ordem de Compra</label>
-                        <input type="text" id="ordem_compra" name="ordem_compra" required>
+                    
+                    <!-- INFORMAÇÕES ESTÁTICAS (Exportador e Banco) -->
+                    <div class="static-info-box">
+                        <!-- Coluna Exportador -->
+                        <div>
+                            <h4>Exportador</h4>
+                            <p><strong>RODRIGO A AMORIM CENTRIFUGAS</strong></p>
+                            <p>Rua Colômbia, 36 - Jd. Belo Horizonte; 1350-184</p>
+                            <p><strong>CNPJ:</strong> 07.176.742/0001-11</p>
+                            <p><strong>Telefone:</strong> (19) 99208-0035</p>
+                            <p><strong>E-mail:</strong> comex@srccentrifugas.com</p>
+                        </div>
+                        <!-- Coluna Banco -->
+                        <div>
+                            <h4>Dados Bancários para Pagamento</h4>
+                            <p><strong>Banco:</strong> Santander</p>
+                            <p><strong>IBAN:</strong> BR8690400888000900130131417C1</p>
+                            <p><strong>SWIFT:</strong> BSCHBRSPXXX</p>
+                            <p><strong>Agência:</strong> 0090 &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Conta:</strong> 130131417</p>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="referencia_interna">Referência Interna</label>
-                        <input type="text" id="referencia_interna" name="referencia_interna">
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                        <!-- Coluna 1: Dados Básicos -->
+                        <div>
+                            <h3>Dados da Proposta</h3>
+                            <div class="form-group">
+                                <label for="ordem_compra">Número de Ordem de Compra</label>
+                                <input type="text" id="ordem_compra" name="ordem_compra" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="referencia_interna">Referência Interna</label>
+                                <input type="text" id="referencia_interna" name="referencia_interna">
+                            </div>
+                            <div class="form-group">
+                                <label for="representante">Representante (Responsável)</label>
+                                <input type="text" id="representante" name="representante">
+                            </div>
+                            <div class="form-group">
+                                <label for="validade_proposta">Validade da Proposta</label>
+                                <input type="text" id="validade_proposta" name="validade_proposta" placeholder="dd/mm/aaaa" maxlength="10">
+                            </div>
+                            <div class="form-group">
+                                <label for="incoterms">Incoterms</label>
+                                <select id="incoterms" name="incoterms">
+                                    <option value="">Selecione...</option>
+                                    <option value="EXW">EXW</option>
+                                    <option value="FCA">FCA</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Coluna 2: Cliente -->
+                        <div>
+                            <h3>Dados do Cliente</h3>
+                             <div class="form-group">
+                                <label for="nome_importador">Nome do Importador (Cliente)</label>
+                                <input type="text" id="nome_importador" name="nome_importador" required>
+                            </div>
+                             <div class="form-group">
+                                <label for="endereco_importador">Endereço do Importador</label>
+                                <textarea id="endereco_importador" name="endereco_importador" rows="5"></textarea>
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="representante">Representante (Responsável)</label>
-                        <input type="text" id="representante" name="representante">
+
+                    <!-- SEÇÃO: ITENS DA PROPOSTA -->
+                    <h3 style="margin-top: 30px; border-top: 1px solid #4a627a; padding-top: 20px;">Itens da Proposta</h3>
+                    
+                    <!-- Busca de Produto -->
+                    <div class="form-group" style="position: relative;">
+                        <label for="produto-search">Adicionar Produto do Estoque</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="produto-search" placeholder="Digite o nome, código (SKU) ou NCM do produto..." autocomplete="off">
+                            <button type="button" class="btn-secondary" id="btn-buscar-produto"><i class="fas fa-search"></i></button>
+                        </div>
+                        <!-- Dropdown de Resultados -->
+                        <div id="search-results" class="dropdown-results"></div>
                     </div>
-                    <div class="form-group">
-                        <label for="validade_proposta">Validade da Proposta</label>
-                        <input type="text" id="validade_proposta" name="validade_proposta" placeholder="dd/mm/aaaa" maxlength="10">
+
+                    <!-- Tabela de Itens -->
+                    <div class="table-container" style="overflow: visible;">
+                        <table id="itensTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 15%;">Código</th>
+                                    <th style="width: 25%;">Produto</th>
+                                    <th style="width: 10%;">NCM</th>
+                                    <th style="width: 10%;">Qtd</th>
+                                    <th style="width: 15%;">V. Unit (USD)</th>
+                                    <th style="width: 15%;">Total (USD)</th>
+                                    <th style="width: 10%;">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="itens-tbody">
+                                <tr id="empty-row">
+                                    <td colspan="7" style="text-align: center; padding: 20px; color: #a9a9c8;">Nenhum item adicionado. Use a busca acima.</td>
+                                </tr>
+                            </tbody>
+                            <tfoot style="border-top: 2px solid #4a627a;">
+                                <tr>
+                                    <td colspan="5" style="text-align: right; font-weight: bold; padding-top: 20px;">VALOR TOTAL DA PROPOSTA:</td>
+                                    <td style="padding-top: 20px;">
+                                        <input type="text" id="valor_total_usd" name="valor_total_usd" value="$ 0.00" readonly style="border: none; background: none; font-weight: bold; font-size: 1.2rem; color: #E67E22; width: 100%; text-align: left;">
+                                    </td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
                     </div>
-                    <div class="form-group">
-                        <label for="valor_total_usd">Valor Total da Proposta (USD)</label>
-                        <input type="text" id="valor_total_usd" name="valor_total_usd" placeholder="$ 0.00">
-                    </div>
-                    <div class="form-group">
-                        <label for="incoterms">Incoterms</label>
-                        <select id="incoterms" name="incoterms">
-                            <option value="">Selecione...</option>
-                            <option value="EXW">EXW</option>
-                            <option value="FCA">FCA</option>
-                        </select>
-                    </div>
-                    <h3>Dados do Cliente</h3>
-                     <div class="form-group">
-                        <label for="nome_importador">Nome do Importador (Cliente)</label>
-                        <input type="text" id="nome_importador" name="nome_importador" required>
-                    </div>
-                     <div class="form-group">
-                        <label for="endereco_importador">Endereço do Importador</label>
-                        <textarea id="endereco_importador" name="endereco_importador" rows="3"></textarea>
-                    </div>
+
                     <div class="form-actions">
                         <a href="/propostas.html" class="btn-secondary" style="text-decoration: none;">Cancelar</a>
                         <button type="submit" class="btn-primary" id="proposta-submit-btn">Salvar Proposta</button>
@@ -90,6 +247,52 @@
             </div>
         </main>
     </div>
+
+    <!-- Modal de Perfil (Mantido igual) -->
+    <div id="user-profile-modal" class="modal">
+        <input type="file" id="modal-profile-pic-input" accept="image/*" style="display: none;">
+        <input type="file" id="modal-payment-pdf-input" accept=".pdf" style="display: none;">
+        <div class="modal-content modal-profile-layout">
+            <span class="close-button" id="close-profile-modal-btn">&times;</span>
+            <div class="profile-header">
+                <div class="profile-avatar-container">
+                    <img src="placeholder-avatar.png" alt="Avatar" id="modal-profile-pic-avatar" class="profile-pic-avatar clickable">
+                    <div class="avatar-edit-overlay"><i class="fas fa-camera"></i></div>
+                </div>
+                <div class="profile-info">
+                    <h2 id="modal-title">Minha Conta (DEV001)</h2>
+                    <div class="detail-group inline">
+                        <p><i class="fas fa-user"></i><strong>Nome:</strong> <span data-detail="nome">Rodrigo A.</span></p>
+                        <p><i class="fas fa-envelope"></i><strong>E-mail:</strong> <span data-detail="email">rodrigogteste@gmail.com</span></p>
+                        <p><i class="fas fa-phone"></i><strong>Telefone:</strong> <span data-detail="telefone">(19) 99999-9999</span></p>
+                        <p><i class="fas fa-star"></i><strong>Plano:</strong> <span data-detail="plano" style="color: #E67E22; font-weight: bold;">Atlas VIP</span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="detail-section">
+                <h3><i class="fas fa-shield-alt"></i> Permissões (Plano Atlas VIP)</h3>
+                <ul class="permission-list">
+                    <li>Incluir e remover produtos</li>
+                    <li>Incluir e remover propostas</li>
+                    <li>Incluir e remover clientes</li>
+                    <li>Configurar ambiente de produção</li>
+                    <li>Alterar usuário e senha de terceiros</li>
+                    <li>Incluir e remover funcionários</li>
+                    <li>Alterar e remover cadastros gerais</li>
+                </ul>
+                <hr class="modal-separator">
+                <h3><i class="fas fa-credit-card"></i> Dados de Pagamento</h3>
+                <div class="payment-status">
+                    <p>Status da Mensalidade: <span id="payment-status-text" class="status-pendente">Mensalidade Pendente</span></p>
+                    <p id="payment-file-name" class="payment-file-info"></p> <button class="btn-primary" id="btn-informar-pagamento">Informar Pagamento</button>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" id="btn-modal-logout">Sair da Conta</button>
+            </div>
+        </div>
+    </div>
+    
     <script src="main.js"></script>
 </body>
 </html>
