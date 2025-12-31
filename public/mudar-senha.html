@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clientes e Fornecedores | SRC Centrífugas</title>
+    <title>Mudar Senha | SRC Centrífugas</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
@@ -16,7 +16,7 @@
                 </a>
             </div>
             <div class="header-title">
-                <h1>Clientes e Fornecedores</h1>
+                <h1>Segurança da Conta</h1>
             </div>
         </header>
         <aside class="sidebar">
@@ -42,15 +42,15 @@
             <nav class="sidebar-nav">
                 <ul>
                     <li><a href="/configuracoes.html"><i class="fas fa-cog"></i> <span>Configurações da Conta</span></a></li>
-                    <li><a href="/mudar-senha.html"><i class="fas fa-key"></i> <span>Mudar a senha</span></a></li>
+                    <!-- Link Ativo -->
+                    <li><a href="/mudar-senha.html" class="active"><i class="fas fa-key"></i> <span>Mudar a senha</span></a></li>
                     <li class="nav-separator"></li>
                     <li><a href="/cadastro-produto.html"><i class="fas fa-plus-circle"></i> <span>Cadastro de Produtos</span></a></li>
                     <li><a href="/estoque.html"><i class="fas fa-warehouse"></i> <span>Estoque</span></a></li>
                     <li><a href="/propostas.html"><i class="fas fa-file-invoice-dollar"></i> <span>Propostas Comerciais</span></a></li>
-                    <li><a href="/faturas.html"><i class="fas fa-file-contract"></i> <span>Faturas Comerciais</span></a></li>
-                    <li><a href="/packing-list.html"><i class="fas fa-boxes"></i> <span>Packing List</span></a></li>
-                    <!-- Novo Item no Menu -->
-                    <li><a href="/clientes.html" class="active"><i class="fas fa-users"></i> <span>Clientes e Fornecedores</span></a></li>
+                   <li><a href="/faturas.html"><i class="fas fa-file-contract"></i> <span>Faturas Comerciais</span></a></li>
+                   <li><a href="/packing-list.html"><i class="fas fa-boxes"></i> <span>Packing List</span></a></li>
+                    <li><a href="/clientes.html"><i class="fas fa-users"></i> <span>Clientes e Fornecedores</span></a></li>
                     <li class="nav-separator"></li>
                     <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> <span>Sair</span></a></li>
                 </ul>
@@ -58,30 +58,33 @@
         </aside>
         
         <main class="main-content" id="main-content">
-            <div class="card full-width">
-                <div class="page-header">
-                    <h2>Parceiros Cadastrados</h2> 
-                    <a href="/cadastro-cliente.html" class="btn-primary">
-                        <i class="fas fa-plus"></i> Cadastrar Cliente/Fornecedor
-                    </a>
-                </div>
-                <div class="table-container">
-                    <table id="clientesTable">
-                        <thead>
-                            <tr>
-                                <th>Nome / Razão Social</th>
-                                <th>Apelido</th>
-                                <th>Telefone</th>
-                                <th>Tipo</th>
-                                <th>Endereço</th>
-                                <th>Ações</th> 
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr><td colspan="6" style="text-align: center;">Carregando contatos...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+            <div class="wizard-container" style="max-width: 600px;">
+                <form id="mudar-senha-form">
+                    <div class="config-section" style="border: none; background: transparent; padding: 0; box-shadow: none;">
+                        <h3 style="color: #E67E22; text-align: center; margin-bottom: 30px;">Alterar Senha de Acesso</h3>
+                        
+                        <div class="form-group">
+                            <label for="senhaAtual" style="font-size: 1rem;">Senha Atual *</label>
+                            <div style="position: relative;">
+                                <input type="password" id="senhaAtual" name="senhaAtual" required placeholder="Digite sua senha atual" style="padding-right: 40px;">
+                                <i class="fas fa-eye toggle-password" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #a9a9c8;"></i>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-top: 20px;">
+                            <label for="novaSenha" style="font-size: 1rem;">Nova Senha *</label>
+                            <div style="position: relative;">
+                                <input type="password" id="novaSenha" name="novaSenha" required placeholder="Digite a nova senha" style="padding-right: 40px;">
+                                <i class="fas fa-eye toggle-password" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #a9a9c8;"></i>
+                            </div>
+                        </div>
+
+                        <div class="form-actions" style="justify-content: space-between; margin-top: 40px;">
+                            <a href="/dashboard.html" class="btn-secondary" style="text-decoration: none; width: 48%; text-align: center;">Cancelar</a>
+                            <button type="submit" class="btn-primary" style="width: 48%;">Salvar Alterações</button>
+                        </div>
+                    </div>
+                </form>
             </div>
         </main>
     </div>

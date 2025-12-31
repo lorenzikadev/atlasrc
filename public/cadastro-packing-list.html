@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Editor Packing List | SRC Centrífugas</title>
+  
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    /* Layout Full Width */
+    .editor-container {
+        background-color: #27293D;
+        padding: 30px;
+        border-radius: 8px;
+        width: 100%; 
+        box-sizing: border-box;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+
+    /* Inputs Dark Mode */
+    .form-dark input, .form-dark select, .form-dark textarea {
+        background-color: #1A2035; 
+        border: 1px solid #4a627a; 
+        color: #fff; 
+        padding: 10px; 
+        width: 100%; 
+        border-radius: 4px; 
+        box-sizing: border-box;
+        font-size: 1rem;
+    }
+    .form-dark input:focus, .form-dark select:focus, .form-dark textarea:focus {
+        border-color: #E67E22;
+        outline: none;
+    }
+    .form-dark label { 
+        color: #a9a9c8; 
+        font-size: 0.9rem; 
+        margin-bottom: 5px; 
+        display: block; 
+        font-weight: bold;
+    }
+    
+    /* Grid System */
+    .grid-row { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
+    .col-1 { flex: 1; min-width: 150px; }
+    .col-2 { flex: 2; min-width: 300px; }
+    .col-full { width: 100%; }
+    
+    .section-title { 
+        color: #E67E22; 
+        border-bottom: 1px solid #4a627a; 
+        padding-bottom: 10px; 
+        margin: 40px 0 20px 0; 
+        font-weight: bold; 
+        text-transform: uppercase;
+        font-size: 1.1rem;
+    }
+    
+    /* Tabela Editor */
+    .editor-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    .editor-table th { background: #2c3e50; color: #E67E22; padding: 12px; text-align: left; border-bottom: 2px solid #4a627a; }
+    .editor-table td { border-bottom: 1px solid #3a3c53; padding: 8px; }
+    .editor-table input { width: 100%; background: transparent; border: 1px solid #4a627a; color: white; text-align: center; padding: 5px; border-radius: 4px; }
+
+    /* Busca Cliente */
+    .search-group { position: relative; display: flex; }
+    .search-group input { border-radius: 4px 0 0 4px; border-right: none; }
+    .search-btn { background: #4a627a; color: white; border: 1px solid #4a627a; border-left: none; padding: 0 15px; cursor: pointer; border-radius: 0 4px 4px 0; }
+    .search-btn:hover { background: #E67E22; border-color: #E67E22; }
+    .dropdown-results { 
+        position: absolute; top: 100%; left: 0; right: 0; background: #2c3e50; border: 1px solid #4a627a; z-index: 100; max-height: 200px; overflow-y: auto; display: none; 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+    .result-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #3a3c53; color: #fff; transition: background 0.2s; }
+    .result-item:hover { background: #E67E22; color: white; }
+
+    /* --- PDF TEMPLATE (Estética Commercial Invoice) --- */
+    #printTemplate { display: none; background: white; color: black; font-family: 'Arial', sans-serif; font-size: 11px; padding: 15px; width: 210mm; }
+    
+    .pdf-header-box {
+        background-color: #8faadc; /* Azul Cabeçalho */
+        border: 1px solid #000;
+        text-align: center;
+        padding: 10px;
+        margin-bottom: 20px;
+    }
+    .pdf-title { font-size: 16px; font-weight: bold; text-transform: uppercase; }
+    .pdf-ref { font-size: 14px; margin-top: 5px; font-weight: bold; }
+
+    .pdf-info-grid { display: flex; justify-content: space-between; gap: 20px; margin-bottom: 20px; }
+    .pdf-col-left, .pdf-col-right { width: 48%; }
+    
+    .pdf-label { font-weight: bold; margin-bottom: 2px; display: block; font-size: 10px; color: #000; }
+    .pdf-text { margin-bottom: 12px; line-height: 1.3; font-size: 11px; }
+    .pdf-blue-text { color: #1a3c8a; font-weight: bold; } /* Destaque Azul */
+
+    .pdf-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 10px; }
+    .pdf-table th { background-color: #8faadc; border: 1px solid #000; padding: 4px; font-weight: bold; text-align: center; }
+    .pdf-table td { border: 1px solid #000; padding: 4px; text-align: center; }
+    
+    .pdf-totals-row td { font-weight: bold; background-color: #e8eef8; }
+    
+    .pdf-footer-box { border: 1px solid #000; padding: 8px; margin-top: 15px; background-color: #fcfcfc; font-size: 10px; }
+  </style>
+</head>
+
+<body class="dashboard-page sidebar-container">
+    <div class="dashboard-container">
+        <header class="header-main">
+            <div class="header-logo"><a href="/dashboard.html" class="header-logo-link"><h2>SRC Centrífugas</h2></a></div>
+            <div class="header-title"><h1>Editor Packing List</h1></div>
+        </header>
+
+        <aside class="sidebar">
+            <button class="sidebar-toggle" id="sidebar-toggle"><i class="fas fa-bars"></i></button>
+            <div class="user-profile clickable" id="user-profile-btn">
+                <div class="user-icon"><img src="placeholder-avatar.png" class="profile-pic-avatar"></div>
+                <div class="user-details"><h3>Rodrigo A.</h3><p>rodrigogteste@gmail.com</p></div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="/configuracoes.html"><i class="fas fa-cog"></i> <span>Configurações</span></a></li>
+                    <li><a href="/mudar-senha.html"><i class="fas fa-key"></i> <span>Senha</span></a></li>
+                    <li class="nav-separator"></li> 
+                    <li><a href="/cadastro-produto.html"><i class="fas fa-plus-circle"></i> <span>Produtos</span></a></li>
+                    <li><a href="/estoque.html"><i class="fas fa-warehouse"></i> <span>Estoque</span></a></li>
+                    <li><a href="/propostas.html"><i class="fas fa-file-invoice-dollar"></i> <span>Propostas</span></a></li>
+                    <li><a href="/faturas.html"><i class="fas fa-file-contract"></i> <span>Faturas</span></a></li>
+                    <li><a href="/packing-list.html" class="active"><i class="fas fa-boxes"></i> <span>Packing List</span></a></li>
+                    <li><a href="/clientes.html"><i class="fas fa-users"></i> <span>Clientes</span></a></li>
+                    <li class="nav-separator"></li>
+                    <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> <span>Sair</span></a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content" id="main-content">
+            <div class="editor-container">
+                <div class="page-header">
+                    <h2>Dados do Documento</h2>
+                    <div>
+                        <button onclick="salvarPL(this)" id="btnSalvar" class="btn-primary"><i class="fas fa-save"></i> Salvar</button>
+                        <button onclick="gerarPDF()" id="btnPDF" class="btn-primary" style="background:#e74c3c; display:none"><i class="fas fa-file-pdf"></i> PDF</button>
+                        <span id="msgAssinado" style="display:none; color:#2ecc71; font-weight:bold; margin-right:10px;"><i class="fas fa-check-circle"></i> Documento Assinado</span>
+                    </div>
+                </div>
+
+                <div class="form-dark">
+                    <div class="grid-row">
+                        <div class="col-1">
+                            <label>Referência</label>
+                            <input type="text" id="ref" placeholder="Ex: PL-001/25">
+                        </div>
+                        <div class="col-1">
+                            <label>Data Emissão</label>
+                            <input type="date" id="data">
+                        </div>
+                        <div class="col-1">
+                            <label>Incoterm</label>
+                            <select id="incoterm">
+                                <option>EXW</option><option>FCA</option><option>FOB</option><option>DAP</option><option>CIP</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="grid-row">
+                        <div class="col-2">
+                            <label>Cliente (Importador)</label>
+                            <div class="search-group">
+                                <input type="text" id="cliente" placeholder="Buscar cliente cadastrado..." autocomplete="off">
+                                <button class="search-btn" onclick="toggleBuscaCliente()"><i class="fas fa-search"></i></button>
+                                <div id="dropdownClientes" class="dropdown-results"></div>
+                            </div>
+                        </div>
+                        <div class="col-1">
+                            <label>Destino</label>
+                            <input type="text" id="destino" placeholder="Cidade/País">
+                        </div>
+                    </div>
+
+                    <!-- Novo Campo: Endereço Completo -->
+                    <div class="grid-row">
+                        <div class="col-full">
+                            <label>Endereço Completo e Detalhes do Cliente</label>
+                            <textarea id="enderecoCliente" rows="3" placeholder="Endereço será preenchido automaticamente ao selecionar o cliente..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="grid-row">
+                        <div class="col-1">
+                            <label>Modal de Transporte</label>
+                            <select id="modal">
+                                <option value="Rodoviário">Rodoviário</option>
+                                <option value="Aéreo">Aéreo</option>
+                                <option value="Rodoferroviário">Rodoferroviário</option>
+                            </select>
+                        </div>
+                        <div class="col-1">
+                            <label>Moeda</label>
+                            <input type="text" id="moeda" value="USD">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-title">ITENS</div>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <select id="selProduto" class="form-dark" style="flex:1; background:#1A2035; color:white; padding:12px; border-radius:4px; border:1px solid #4a627a;">
+                        <option value="">Selecione um produto do estoque...</option>
+                    </select>
+                    <button onclick="addProduto()" class="btn-primary"><i class="fas fa-plus"></i> Adicionar Item</button>
+                </div>
+
+                <table class="editor-table">
+                    <thead>
+                        <tr>
+                            <th>SKU</th>
+                            <th>Descrição</th>
+                            <th>NCM</th>
+                            <th style="width: 100px;">Qtd</th>
+                            <th style="width: 120px;">Peso Líq Unit (Kg)</th>
+                            <th style="width: 120px;">Peso Líq Total</th>
+                            <th style="text-align: center;">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tblItens"></tbody>
+                </table>
+
+                <div class="section-title">VOLUMES & PESOS</div>
+                <div class="form-dark">
+                    <div class="grid-row">
+                        <div class="col-1"><label>Qtd Volumes</label><input type="number" id="volQtd"></div>
+                        <div class="col-1"><label>Peso Bruto Total (Kg)</label><input type="number" id="pesoBruto"></div>
+                    </div>
+                    
+                    <label style="margin-top:15px; font-weight:bold; color:#E67E22; border-bottom: 1px solid #4a627a; display:inline-block; margin-bottom:10px;">Dimensões do Volume (cm)</label>
+                    <div class="grid-row">
+                        <div class="col-1"><label>Comprimento</label><input type="number" id="dimC" placeholder="0"></div>
+                        <div class="col-1"><label>Largura</label><input type="number" id="dimL" placeholder="0"></div>
+                        <div class="col-1"><label>Altura</label><input type="number" id="dimA" placeholder="0"></div>
+                    </div>
+                </div>
+
+                <div class="section-title">OBSERVAÇÕES</div>
+                <div class="form-dark"><textarea id="obs" rows="4" placeholder="Informações adicionais..."></textarea></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- TEMPLATE PDF (Visual: Commercial Invoice Azul) -->
+    <div id="printTemplate">
+        <div class="pdf-header-box">
+            <div class="pdf-title">LISTA DE EMPAQUE / PACKING LIST</div>
+            <div class="pdf-ref" id="pdfRefHeader"></div>
+        </div>
+        
+        <div class="pdf-info-grid">
+            <div class="pdf-col-left">
+                <span class="pdf-label">IMPORTADOR, CONSIGNATÁRIO E NOTIFICADO:</span>
+                <div class="pdf-text">
+                    <span id="pdfClienteNome" class="pdf-blue-text"></span><br>
+                    <span id="pdfClienteEndereco" style="white-space: pre-wrap;"></span>
+                </div>
+
+                <span class="pdf-label">PAÍS DE ORIGEM:</span>
+                <div class="pdf-text">Brasil</div>
+
+                <span class="pdf-label">MODAL DE TRANSPORTE:</span>
+                <div class="pdf-text" id="pdfModal"></div>
+                
+                <span class="pdf-label">DESTINO:</span>
+                <div class="pdf-text" id="pdfDestino"></div>
+            </div>
+
+            <div class="pdf-col-right">
+                <span class="pdf-label">EXPORTADOR:</span>
+                <div class="pdf-text">
+                    Rodrigo A. Amorim Centrifugas<br>
+                    Rua Colômbia, 36 – Jd. Belo Horizonte; 13450-184<br>
+                    CNPJ: 07.176.742/001-11<br>
+                    +55 (19) 99208-0035<br>
+                    <span class="pdf-blue-text">comex@srccentrifugas.com.br</span>
+                </div>
+
+                <span class="pdf-label">DATA DE EMISSÃO:</span>
+                <div class="pdf-text" id="pdfData"></div>
+
+                <span class="pdf-label">INCOTERM:</span>
+                <div class="pdf-text" id="pdfIncoterm"></div>
+                
+                <span class="pdf-label">MOEDA:</span>
+                <div class="pdf-text" id="pdfMoeda"></div>
+            </div>
+        </div>
+
+        <table class="pdf-table">
+            <thead>
+                <tr>
+                    <th>ITEM</th>
+                    <th>CÓDIGO</th>
+                    <th>DESCRIÇÃO</th>
+                    <th>QTD</th>
+                    <th>PESO LÍQ (KG)</th>
+                </tr>
+            </thead>
+            <tbody id="pdfTblBody"></tbody>
+            <tfoot>
+                <tr class="pdf-totals-row">
+                    <td colspan="3" style="text-align:right;">TOTAIS</td>
+                    <td id="pdfTotalQtd"></td>
+                    <td id="pdfTotalLiq"></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="pdf-footer-box">
+            <p><strong>VOLUMES:</strong> <span id="pdfVolQtd"></span></p>
+            <p><strong>DIMENSÕES:</strong> <span id="pdfVolDim"></span></p>
+            <p><strong>PESO BRUTO TOTAL:</strong> <span id="pdfPesoBruto"></span> Kg</p>
+        </div>
+        
+        <div style="margin-top: 15px;">
+            <span class="pdf-label" style="color: #1a3c8a;">OBSERVAÇÕES:</span>
+            <div class="pdf-text" id="pdfObs" style="white-space: pre-wrap;"></div>
+        </div>
+
+        <div style="margin-top:50px; text-align:center;">
+            ___________________________________<br>
+            Rodrigo Amorim<br>
+            Assinatura Eletrônica
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+    <script>
+        let itens = [];
+        let idAtual = null;
+        let assinado = false;
+        let clientesDb = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Produtos
+            try {
+                const resP = await fetch('/api/produtos');
+                const prods = await resP.json();
+                const sel = document.getElementById('selProduto');
+                prods.forEach(p => {
+                    let opt = document.createElement('option');
+                    opt.value = JSON.stringify(p);
+                    opt.text = `${p.sku || 'S/ SKU'} - ${p.nome}`;
+                    sel.appendChild(opt);
+                });
+            } catch(e) { console.error("Erro prod", e); }
+
+            // Clientes
+            try {
+                const resC = await fetch('/api/clientes');
+                clientesDb = await resC.json();
+            } catch(e) { console.error("Erro cli", e); }
+
+            // Edição
+            const params = new URLSearchParams(window.location.search);
+            idAtual = params.get('id');
+            
+            if(idAtual) {
+                loadPL(idAtual);
+            } else {
+                document.getElementById('data').valueAsDate = new Date();
+            }
+
+            if(params.get('print')) setTimeout(gerarPDF, 1000);
+        });
+
+        // --- BUSCA CLIENTE + PREENCHIMENTO COMPLETO ---
+        function toggleBuscaCliente() {
+            const drop = document.getElementById('dropdownClientes');
+            drop.innerHTML = '';
+            
+            if (drop.style.display === 'block') { drop.style.display = 'none'; return; }
+
+            if (!clientesDb || clientesDb.length === 0) {
+                drop.innerHTML = '<div class="result-item">Nenhum cliente cadastrado</div>';
+            } else {
+                clientesDb.forEach(c => {
+                    const div = document.createElement('div');
+                    div.className = 'result-item';
+                    div.innerHTML = `<strong>${c.nome}</strong>`;
+                    div.onclick = () => {
+                        // Preenche Nome
+                        document.getElementById('cliente').value = c.nome;
+                        
+                        // Monta Endereço Completo
+                        let endCompleto = c.endereco || '';
+                        if(c.numero) endCompleto += `, ${c.numero}`;
+                        if(c.bairro) endCompleto += ` - ${c.bairro}`;
+                        if(c.cidade) endCompleto += `\n${c.cidade}`;
+                        if(c.estado) endCompleto += ` - ${c.estado}`;
+                        if(c.pais) endCompleto += `, ${c.pais}`;
+                        if(c.cep) endCompleto += `\nCEP: ${c.cep}`;
+                        if(c.telefone) endCompleto += `\nTel: ${c.telefone}`;
+                        
+                        document.getElementById('enderecoCliente').value = endCompleto.trim();
+                        drop.style.display = 'none';
+                    };
+                    drop.appendChild(div);
+                });
+            }
+            drop.style.display = 'block';
+        }
+
+        // Fechar dropdown
+        document.addEventListener('click', function(e) {
+            const drop = document.getElementById('dropdownClientes');
+            const btn = document.querySelector('.search-btn');
+            const input = document.getElementById('cliente');
+            if (!drop.contains(e.target) && !btn.contains(e.target) && !input.contains(e.target)) {
+                drop.style.display = 'none';
+            }
+        });
+
+        // --- ITENS ---
+        function addProduto() {
+            const val = document.getElementById('selProduto').value;
+            if(!val) return alert("Selecione um produto.");
+            const p = JSON.parse(val);
+            itens.push({ ...p, qtd: 1, pesoLiq: 0, totalLiq: 0 });
+            render();
+        }
+
+        function render() {
+            const tb = document.getElementById('tblItens');
+            tb.innerHTML = '';
+            itens.forEach((i, idx) => {
+                i.totalLiq = (i.qtd * i.pesoLiq).toFixed(2);
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${i.sku || '-'}</td><td>${i.nome}</td><td>${i.ncm || ''}</td>
+                    <td><input type="number" value="${i.qtd}" onchange="updateItem(${idx}, 'qtd', this.value)"></td>
+                    <td><input type="number" value="${i.pesoLiq}" onchange="updateItem(${idx}, 'pesoLiq', this.value)"></td>
+                    <td>${i.totalLiq}</td>
+                    <td style="text-align:center;"><button onclick="removeItem(${idx})" style="color:#e74c3c; background:none; border:none; cursor:pointer"><i class="fas fa-trash"></i></button></td>
+                `;
+                tb.appendChild(tr);
+            });
+        }
+        
+        function removeItem(idx) { itens.splice(idx, 1); render(); }
+        function updateItem(idx, field, val) { itens[idx][field] = parseFloat(val) || 0; render(); }
+
+        // --- CARREGAR / SALVAR ---
+        async function loadPL(id) {
+            try {
+                const res = await fetch(`/api/packing-lists/${id}`);
+                const pl = await res.json();
+                
+                document.getElementById('ref').value = pl.ref || '';
+                document.getElementById('data').value = pl.dataEmissao || '';
+                document.getElementById('cliente').value = pl.clienteNome || '';
+                document.getElementById('enderecoCliente').value = pl.clienteEndereco || ''; // Carrega endereço
+                document.getElementById('destino').value = pl.destino || '';
+                document.getElementById('modal').value = pl.modal || 'Rodoviário';
+                document.getElementById('incoterm').value = pl.incoterm || 'EXW';
+                document.getElementById('moeda').value = pl.moeda || 'USD';
+                
+                document.getElementById('volQtd').value = pl.totalVolumes || '';
+                document.getElementById('dimC').value = pl.dimC || '';
+                document.getElementById('dimL').value = pl.dimL || '';
+                document.getElementById('dimA').value = pl.dimA || '';
+                document.getElementById('pesoBruto').value = pl.pesoBrutoTotal || '';
+                document.getElementById('obs').value = pl.obs || '';
+                
+                itens = pl.itens || [];
+                assinado = pl.assinada;
+                render();
+
+                if(assinado) {
+                    document.getElementById('btnSalvar').style.display = 'none';
+                    document.getElementById('msgAssinado').style.display = 'inline';
+                    document.getElementById('btnPDF').style.display = 'inline-block';
+                    document.querySelectorAll('input, select, textarea, button:not(#btnPDF)').forEach(e => e.disabled = true);
+                }
+            } catch(e) { console.error("Erro load", e); }
+        }
+
+        async function salvarPL(btn) {
+            if(assinado) return alert("Documento assinado não pode ser editado.");
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+
+            const payload = {
+                ref: document.getElementById('ref').value,
+                dataEmissao: document.getElementById('data').value,
+                incoterm: document.getElementById('incoterm').value,
+                clienteNome: document.getElementById('cliente').value,
+                clienteEndereco: document.getElementById('enderecoCliente').value, // Salva endereço
+                destino: document.getElementById('destino').value,
+                modal: document.getElementById('modal').value,
+                moeda: document.getElementById('moeda').value,
+                itens: itens,
+                totalVolumes: document.getElementById('volQtd').value,
+                dimC: document.getElementById('dimC').value,
+                dimL: document.getElementById('dimL').value,
+                dimA: document.getElementById('dimA').value,
+                pesoBrutoTotal: document.getElementById('pesoBruto').value,
+                obs: document.getElementById('obs').value
+            };
+
+            const url = idAtual ? `/api/packing-lists/${idAtual}` : '/api/packing-lists';
+            const method = idAtual ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                
+                if(res.ok) window.location.href = 'packing-list.html';
+                else throw new Error("Falha API");
+            } catch(e) {
+                alert("Erro ao salvar.");
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Salvar';
+            }
+        }
+
+        function gerarPDF() {
+            // Mapeia dados para o template
+            document.getElementById('pdfRefHeader').innerText = document.getElementById('ref').value;
+            document.getElementById('pdfClienteNome').innerText = document.getElementById('cliente').value;
+            document.getElementById('pdfClienteEndereco').innerText = document.getElementById('enderecoCliente').value;
+            document.getElementById('pdfDestino').innerText = document.getElementById('destino').value;
+            document.getElementById('pdfModal').innerText = document.getElementById('modal').value;
+            document.getElementById('pdfIncoterm').innerText = document.getElementById('incoterm').value;
+            document.getElementById('pdfMoeda').innerText = document.getElementById('moeda').value;
+            
+            const rawData = document.getElementById('data').value;
+            document.getElementById('pdfData').innerText = rawData ? rawData.split('-').reverse().join('.') : '';
+            
+            // Tabela
+            const tb = document.getElementById('pdfTblBody');
+            tb.innerHTML = '';
+            let tQtd = 0, tLiq = 0;
+            itens.forEach((i, idx) => {
+                tQtd += i.qtd;
+                tLiq += (i.qtd * i.pesoLiq);
+                tb.innerHTML += `<tr><td>${idx+1}</td><td>${i.sku || ''}</td><td style="text-align:left">${i.nome}</td><td>${i.qtd}</td><td>${(i.qtd * i.pesoLiq).toFixed(2)}</td></tr>`;
+            });
+            document.getElementById('pdfTotalQtd').innerText = tQtd;
+            document.getElementById('pdfTotalLiq').innerText = tLiq.toFixed(2);
+
+            // Footer
+            document.getElementById('pdfVolQtd').innerText = document.getElementById('volQtd').value;
+            const c = document.getElementById('dimC').value || '0';
+            const l = document.getElementById('dimL').value || '0';
+            const a = document.getElementById('dimA').value || '0';
+            document.getElementById('pdfVolDim').innerText = `${c} x ${l} x ${a} cm`;
+            document.getElementById('pdfPesoBruto').innerText = document.getElementById('pesoBruto').value;
+            document.getElementById('pdfObs').innerText = document.getElementById('obs').value;
+
+            // Gera PDF
+            const el = document.getElementById('printTemplate');
+            el.style.display = 'block';
+            const opt = {
+                margin: 5,
+                filename: `PackingList_${document.getElementById('ref').value}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(el).save().then(() => el.style.display = 'none');
+        }
+    </script>
+</body>
+</html>

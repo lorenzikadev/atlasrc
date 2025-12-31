@@ -47,11 +47,13 @@
             <nav class="sidebar-nav">
                 <ul>
                     <li><a href="/configuracoes.html" class="active"><i class="fas fa-cog"></i> <span>Configurações da Conta</span></a></li>
-                    <li><a href="#"><i class="fas fa-key"></i> <span>Mudar a senha</span></a></li>
+                    <li><a href="/mudar-senha.html"><i class="fas fa-key"></i> <span>Mudar a senha</span></a></li>
                     <li class="nav-separator"></li> 
                     <li><a href="/cadastro-produto.html"><i class="fas fa-plus-circle"></i> <span>Cadastro de Produtos</span></a></li>
                     <li><a href="/estoque.html"><i class="fas fa-warehouse"></i> <span>Estoque</span></a></li>
                     <li><a href="/propostas.html"><i class="fas fa-file-invoice-dollar"></i> <span>Propostas Comerciais</span></a></li>
+                    <li><a href="/faturas.html"><i class="fas fa-file-contract"></i> <span>Faturas Comerciais</span></a></li>
+                    <li><a href="/packing-list.html"><i class="fas fa-boxes"></i> <span>Packing List</span></a></li>
                     <li><a href="/clientes.html"><i class="fas fa-users"></i> <span>Clientes e Fornecedores</span></a></li>
                     <li class="nav-separator"></li>
                     <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> <span>Sair</span></a></li>
@@ -297,7 +299,34 @@
                     </div>
                     <div id="tab-financeiro" class="config-tab-content" style="display: none;"><p style="padding: 20px; color: #aaa;">Configurações Financeiras em breve...</p></div>
                     <div id="tab-backups" class="config-tab-content" style="display: none;"><p style="padding: 20px; color: #aaa;">Backups em breve...</p></div>
-                    <div id="tab-contas" class="config-tab-content" style="display: none;"><p style="padding: 20px; color: #aaa;">Gerenciamento de Contas em breve...</p></div>
+                    <!-- ABA 4: CONTAS (GERENCIAMENTO DE USUÁRIOS) -->
+                    <div id="tab-contas" class="config-tab-content" style="display: none;">
+                        
+                        <!-- Bloco 1: Meu Usuário -->
+                        <div class="config-section">
+                            <h3>Meu Perfil de Acesso</h3>
+                            <div class="form-group">
+                                <label for="meuUsuarioAtual" style="color: #333;">Nome de Usuário (Login)</label>
+                                <div style="display: flex; gap: 10px;">
+                                    <input type="text" id="meuUsuarioAtual" style="color: #333; background: #fff; border: 1px solid #ccc;" placeholder="Carregando...">
+                                    <button class="btn-primary" id="btnSalvarMeuUsuario" style="white-space: nowrap;">Salvar Alteração</button>
+                                </div>
+                                <p style="font-size: 0.8rem; color: #666; margin-top: 5px;">Este é o nome que você usa para entrar no sistema.</p>
+                            </div>
+                        </div>
+
+                        <!-- Bloco 2: Gerenciar Outras Contas -->
+                        <div class="config-section">
+                            <h3>Gerenciamento de Contas</h3>
+                            <p style="margin-bottom: 15px; color: #555;">Visualize e gerencie o acesso de outros funcionários ao sistema.</p>
+                            
+                            <button type="button" class="btn-secondary" id="btnAbrirGerenciadorContas" style="width: 100%; padding: 15px; display: flex; justify-content: space-between; align-items: center;">
+                                <span><i class="fas fa-users-cog"></i> Gerenciar Contas do Sistema</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+
+                    </div>
 
                 </div> 
             </div> 
@@ -398,6 +427,70 @@
         </div>
     </div>
 
+    <!-- Modal de Gerenciamento de Contas -->
+    <div id="modal-contas" class="modal" style="display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); align-items: center; justify-content: center;">
+        <div class="modal-content" style="background-color: #fff; margin: 0; padding: 0; width: 600px; max-width: 95%; border-radius: 8px; height: 80vh; display: flex; flex-direction: column;">
+            
+            <!-- Header Modal -->
+            <div style="padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #2c3e50; border-radius: 8px 8px 0 0; color: white;">
+                <h3 style="margin: 0;"><i class="fas fa-users"></i> Contas Ativas</h3>
+                <span id="close-modal-contas" style="cursor: pointer; font-size: 1.5rem;">&times;</span>
+            </div>
+
+            <!-- Corpo Modal (Lista + Form) -->
+            <div style="padding: 20px; flex: 1; overflow-y: auto; background: #f4f7f6;">
+                
+                <!-- Lista de Usuários -->
+                <div id="lista-usuarios-container">
+                    <table style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                        <thead style="background: #eee; color: #333;">
+                            <tr>
+                                <th style="padding: 10px; text-align: left;">Usuário</th>
+                                <th style="padding: 10px; text-align: left;">Tipo</th>
+                                <th style="padding: 10px; text-align: center;">ID</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-usuarios">
+                            <!-- Preenchido via JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Formulário de Novo Usuário (Oculto por padrão) -->
+                <div id="form-novo-usuario" style="display: none; margin-top: 20px; background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; animation: fadeIn 0.3s;">
+                    <h4 style="color: #E67E22; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Nova Conta</h4>
+                    
+                    <div class="form-group">
+                        <label style="color: #333;">Usuário</label>
+                        <input type="text" id="newInfoUser" style="width: 100%; padding: 8px; border: 1px solid #ccc; color: #333;">
+                    </div>
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label style="color: #333;">Senha</label>
+                        <input type="password" id="newInfoPass" style="width: 100%; padding: 8px; border: 1px solid #ccc; color: #333;">
+                    </div>
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label style="color: #333;">Tipo de Permissão</label>
+                        <select id="newInfoType" style="width: 100%; padding: 8px; border: 1px solid #ccc; color: #333;">
+                            <option value="Funcionario">Funcionário</option>
+                            <option value="Admin">Administrador</option>
+                            <option value="VIP">VIP</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button id="btnCancelarCriacao" class="btn-secondary" style="padding: 8px 15px; font-size: 0.9rem;">Cancelar</button>
+                        <button id="btnSalvarNovoUsuario" class="btn-primary" style="padding: 8px 15px; font-size: 0.9rem;">Salvar Conta</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer Modal -->
+            <div style="padding: 15px 20px; border-top: 1px solid #eee; background: white; border-radius: 0 0 8px 8px; text-align: right;">
+                <button id="btnAbrirFormUsuario" class="btn-primary" style="border-radius: 30px;"><i class="fas fa-plus"></i> Cadastrar Conta</button>
+            </div>
+        </div>
+    </div>
     <script src="main.js"></script>
 </body>
 </html>

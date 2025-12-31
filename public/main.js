@@ -96,14 +96,16 @@ document.addEventListener('DOMContentLoaded', () => {
     loadProfilePic();
     // --- FIM LÓGICA DE FOTO ---
 
-    // --- LÓGICA DA TELA DE LOGIN ---
+   // --- LÓGICA DA TELA DE LOGIN (COM ANIMAÇÃO DE BOAS-VINDAS) ---
     const loginForm = document.getElementById('login-form');
+    
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault(); 
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const errorMessage = document.getElementById('error-message');
+            
             try {
                 const response = await fetch('/login', {
                     method: 'POST',
@@ -111,13 +113,91 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify({ username, password }),
                 });
                 const data = await response.json();
+                
                 if (data.success) {
-                    window.location.href = '/dashboard.html';
+                    localStorage.setItem('usuarioLogado', JSON.stringify(data.user));
+                    // 1. Esconde o formulário de login imediatamente
+                    document.querySelector('.login-container').style.display = 'none';
+                    
+                    // 2. Calcula a saudação baseada na hora
+                    const hora = new Date().getHours();
+                    let saudacao = 'Bom dia';
+                    if (hora >= 12 && hora < 18) saudacao = 'Boa tarde';
+                    if (hora >= 18) saudacao = 'Boa noite';
+                    
+                    // 3. Atualiza o texto da tela de splash
+                    const welcomeText = document.getElementById('welcome-text');
+                    // Coloca em maiúsculas para ficar bonito
+                    const nomeExibicao = username.toUpperCase(); 
+                    
+                    if (welcomeText) {
+                        welcomeText.innerHTML = `${saudacao}, <strong>${nomeExibicao}</strong>`;
+                    }
+
+                    // 4. Mostra a tela de boas-vindas
+                    const splash = document.getElementById('splash-screen');
+                    if (splash) {
+                        splash.style.display = 'flex'; // Flex para centralizar
+                    }
+
+                    // 5. Aguarda 3 segundos e redireciona
+                    setTimeout(() => {
+                        window.location.href = '/dashboard.html';
+                    }, 3000);
+
                 } else {
                     errorMessage.textContent = data.message || 'Erro ao tentar fazer login.';
                 }
             } catch (error) {
+                console.error(error);
                 errorMessage.textContent = 'Erro de conexão com o servidor.';
+            }
+        });
+    }
+
+    // --- LÓGICA DE MUDANÇA DE SENHA (NOVO) ---
+    const formSenha = document.getElementById('mudar-senha-form');
+    if (formSenha) {
+        // Função para o "olhinho" mostrar/ocultar senha
+        document.querySelectorAll('.toggle-password').forEach(icon => {
+            icon.addEventListener('click', function() {
+                const input = this.previousElementSibling;
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    this.classList.remove('fa-eye');
+                    this.classList.add('fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    this.classList.remove('fa-eye-slash');
+                    this.classList.add('fa-eye');
+                }
+            });
+        });
+
+        // Envio do formulário
+        formSenha.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const senhaAtual = document.getElementById('senhaAtual').value;
+            const novaSenha = document.getElementById('novaSenha').value;
+
+            if (confirm('Você tem certeza que deseja mudar a senha permanentemente?')) {
+                try {
+                    const response = await fetch('/api/mudar-senha', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ senhaAtual, novaSenha })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        alert('Senha alterada com sucesso! Você será redirecionado para o login.');
+                        window.location.href = '/index.html'; 
+                    } else {
+                        alert('Erro: ' + data.message);
+                    }
+                } catch (error) {
+                    console.error(error);
+                    alert('Erro de conexão com o servidor.');
+                }
             }
         });
     }
@@ -1121,6 +1201,153 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+// ============================================================
+    // LÓGICA DO MODAL DE PERFIL (COM VALIDADE DE 1 MÊS)
+    // ============================================================
+    const profileBtn = document.getElementById('user-profile-btn');
+    const profileModal = document.getElementById('user-profile-modal');
+    
+    if (profileBtn && profileModal) {
+        const closeBtn = document.getElementById('close-profile-modal-btn');
+        const modalLogoutBtn = document.getElementById('btn-modal-logout');
+        const paymentBtn = document.getElementById('btn-informar-pagamento');
+        const paymentStatusText = document.getElementById('payment-status-text');
+        const paymentFileInput = document.getElementById('modal-payment-pdf-input');
+        const paymentFileName = document.getElementById('payment-file-name');
+
+        const modalPicAvatar = document.getElementById('modal-profile-pic-avatar');
+        const modalPicInput = document.getElementById('modal-profile-pic-input');
+        
+        const carregarFotoModal = () => {
+            const profilePicDataUrl = localStorage.getItem('userProfilePic');
+            if (profilePicDataUrl) {
+                modalPicAvatar.src = profilePicDataUrl;
+            }
+        };
+
+        // Função que verifica se já passou 1 mês desde o último pagamento
+        const verificarVencimento = () => {
+            const ultimoPagamento = localStorage.getItem('dataUltimoPagamento');
+            
+            if (ultimoPagamento) {
+                const dataPagamento = new Date(ultimoPagamento);
+                const hoje = new Date();
+                
+                // Cria uma data de validade (Data Pagamento + 1 Mês)
+                const dataValidade = new Date(dataPagamento);
+                dataValidade.setMonth(dataValidade.getMonth() + 1);
+
+                // Se hoje for maior que a validade, vence o pagamento
+                if (hoje > dataValidade) {
+                    localStorage.setItem('mensalidadeAtiva', 'false');
+                    return false; // Vencido
+                }
+                return true; // Válido
+            }
+            return false; // Sem data = Vencido
+        };
+
+        const abrirModalPerfil = () => {
+            carregarFotoModal();
+            
+            // Verifica validade antes de exibir
+            verificarVencimento();
+            
+            const pagamentoAtivo = localStorage.getItem('mensalidadeAtiva') === 'true';
+            
+            if (pagamentoAtivo) {
+                paymentStatusText.textContent = 'Mensalidade Renovada!';
+                paymentStatusText.className = 'status-ativo';
+                paymentStatusText.style.color = '#27ae60';
+                paymentBtn.textContent = 'Pagamento Confirmado';
+                paymentBtn.disabled = true; 
+                paymentBtn.style.opacity = '0.6';
+                paymentFileName.textContent = localStorage.getItem('comprovanteNome') || '';
+            } else {
+                paymentStatusText.textContent = 'Boleto pronto para pagamento';
+                paymentStatusText.className = 'status-pendente';
+                paymentStatusText.style.color = '#e74c3c';
+                paymentBtn.textContent = 'Informar Pagamento';
+                paymentBtn.disabled = false;
+                paymentBtn.style.opacity = '1';
+                paymentFileName.textContent = '';
+            }
+            profileModal.style.display = 'block';
+        };
+
+        const fecharModalPerfil = () => {
+            profileModal.style.display = 'none';
+        };
+
+        const anexarComprovante = () => {
+            paymentFileInput.click(); 
+        };
+        
+        const handlePaymentUpload = (event) => {
+            const file = event.target.files[0];
+            if (!file) return; 
+
+            if (file.type !== 'application/pdf') {
+                alert('Erro: Apenas arquivos PDF são permitidos.');
+                return;
+            }
+
+            // Salva o status, o nome e a DATA DE HOJE para controle
+            localStorage.setItem('mensalidadeAtiva', 'true');
+            localStorage.setItem('comprovanteNome', file.name); 
+            localStorage.setItem('dataUltimoPagamento', new Date().toISOString());
+            
+            // Atualiza visual na hora
+            paymentStatusText.textContent = 'Mensalidade Renovada!';
+            paymentStatusText.className = 'status-ativo';
+            paymentStatusText.style.color = '#27ae60';
+            paymentBtn.textContent = 'Pagamento Confirmado';
+            paymentBtn.disabled = true;
+            paymentBtn.style.opacity = '0.6';
+            paymentFileName.textContent = `Arquivo: ${file.name}`;
+            
+            alert('Comprovante enviado! Seu acesso está renovado por 1 mês.');
+        };
+        
+        const handleProfilePicUpload = (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const dataUrl = e.target.result;
+                localStorage.setItem('userProfilePic', dataUrl);
+                modalPicAvatar.src = dataUrl;
+                const sidebarPic = document.getElementById('sidebar-profile-pic');
+                if (sidebarPic) {
+                    sidebarPic.src = dataUrl;
+                }
+            };
+            reader.readAsDataURL(file);
+        };
+
+        profileBtn.addEventListener('click', abrirModalPerfil);
+        closeBtn.addEventListener('click', fecharModalPerfil);
+        paymentBtn.addEventListener('click', anexarComprovante); 
+        paymentFileInput.addEventListener('change', handlePaymentUpload); 
+        modalLogoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('usuarioLogado'); // Limpa sessão
+            window.location.href = '/index.html';
+        });
+
+        if (modalPicAvatar && modalPicInput) {
+            modalPicAvatar.addEventListener('click', () => modalPicInput.click());
+            modalPicInput.addEventListener('change', handleProfilePicUpload);
+        }
+
+        window.addEventListener('click', (event) => {
+            if (event.target === profileModal) {
+                fecharModalPerfil();
+            }
+        });
+    }
+
     // --- LÓGICA DO MENU DESLIZANTE (FLYOUT) ---
     const sidebar = document.querySelector('.sidebar');
     const toggleBtn = document.getElementById('sidebar-toggle');
@@ -1324,6 +1551,184 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Erro de conexão.');
             }
         });
+    }
+
+   // ============================================================
+    // LÓGICA DE GERENCIAMENTO DE CONTAS (ABA CONTAS)
+    // ============================================================
+    if (window.location.pathname.includes('configuracoes.html')) {
+        
+        // 1. Carregar "Meu Usuário"
+        const inputMeuUser = document.getElementById('meuUsuarioAtual');
+        const btnSalvarMeuUser = document.getElementById('btnSalvarMeuUsuario');
+        const userLogado = JSON.parse(localStorage.getItem('usuarioLogado') || '{}');
+
+        if (inputMeuUser && userLogado.id) {
+            inputMeuUser.value = userLogado.login;
+            
+            btnSalvarMeuUser.addEventListener('click', async () => {
+                const novoLogin = inputMeuUser.value.trim();
+                if(!novoLogin) return alert("Digite um nome válido.");
+                
+                try {
+                    const res = await fetch(`/api/usuarios/${userLogado.id}`, {
+                        method: 'PUT',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ login: novoLogin })
+                    });
+                    const data = await res.json();
+                    if(res.ok) {
+                        alert('Usuário alterado! Faça login novamente.');
+                        localStorage.removeItem('usuarioLogado');
+                        window.location.href = '/index.html';
+                    } else {
+                        alert(data.message);
+                    }
+                } catch(e) { alert('Erro ao salvar. O servidor está rodando?'); }
+            });
+        }
+
+        // 2. Gerenciamento de Contas (Modal)
+        const btnAbrirGerenciador = document.getElementById('btnAbrirGerenciadorContas');
+        const modalContas = document.getElementById('modal-contas');
+        const btnFecharContas = document.getElementById('close-modal-contas');
+        const tbodyUsuarios = document.getElementById('tbody-usuarios');
+        
+        // Form Nova Conta
+        const btnAbrirForm = document.getElementById('btnAbrirFormUsuario');
+        const formNovoUsuario = document.getElementById('form-novo-usuario');
+        const btnCancelarCriacao = document.getElementById('btnCancelarCriacao');
+        const btnSalvarNovo = document.getElementById('btnSalvarNovoUsuario');
+
+        const carregarListaUsuarios = async () => {
+            if (!tbodyUsuarios) return;
+            tbodyUsuarios.innerHTML = '<tr><td colspan="3" style="text-align:center;">Carregando...</td></tr>';
+            try {
+                const res = await fetch('/api/usuarios');
+                if (!res.ok) throw new Error("Erro na API"); // Verifica se a rota existe
+                
+                const usuarios = await res.json();
+                tbodyUsuarios.innerHTML = '';
+                
+                usuarios.forEach(u => {
+                    const row = tbodyUsuarios.insertRow();
+                    row.style.borderBottom = "1px solid #eee";
+                    
+                    // Coluna Usuario
+                    const cellUser = row.insertCell();
+                    cellUser.style.padding = "12px";
+                    cellUser.style.color = "#333";
+                    cellUser.innerHTML = `<strong>${u.login}</strong> ${u.id === userLogado.id ? '<span style="color:#27ae60; font-size:0.8rem;">(Você)</span>' : ''}`;
+
+                    // Coluna Tipo
+                    const cellTipo = row.insertCell();
+                    cellTipo.style.textAlign = "center";
+                    cellTipo.innerHTML = `<span style="background:#eee; padding:4px 8px; border-radius:4px; font-size:0.8rem; color:#555;">${u.tipo}</span>`;
+
+                    // Coluna ID
+                    const cellID = row.insertCell();
+                    cellID.style.textAlign = "center";
+                    cellID.style.color = "#999";
+                    cellID.textContent = u.id;
+                });
+            } catch(e) { 
+                console.error(e);
+                tbodyUsuarios.innerHTML = '<tr><td colspan="3" style="text-align:center; color:red;">Erro ao carregar. Verifique o Server.js</td></tr>';
+            }
+        };
+
+        if (btnAbrirGerenciador) {
+            btnAbrirGerenciador.addEventListener('click', () => {
+                modalContas.style.display = 'flex';
+                carregarListaUsuarios();
+                formNovoUsuario.style.display = 'none'; 
+                document.getElementById('lista-usuarios-container').style.display = 'block';
+                btnAbrirForm.style.display = 'inline-block';
+            });
+        }
+
+        if (btnFecharContas) {
+            btnFecharContas.addEventListener('click', () => {
+                modalContas.style.display = 'none';
+            });
+        }
+
+        // Botão "Cadastrar Conta" (Abre o formulário)
+        if (btnAbrirForm) {
+            btnAbrirForm.addEventListener('click', () => {
+                document.getElementById('lista-usuarios-container').style.display = 'none';
+                btnAbrirForm.style.display = 'none';
+                formNovoUsuario.style.display = 'block';
+            });
+        }
+
+        // Botão Cancelar
+        if (btnCancelarCriacao) {
+            btnCancelarCriacao.addEventListener('click', () => {
+                formNovoUsuario.style.display = 'none';
+                document.getElementById('lista-usuarios-container').style.display = 'block';
+                btnAbrirForm.style.display = 'inline-block';
+            });
+        }
+
+        // Botão Salvar Nova Conta (DEBUGADO)
+        if (btnSalvarNovo) {
+            btnSalvarNovo.addEventListener('click', async (e) => {
+                e.preventDefault(); // Evita recarregar
+                console.log("Clicou em salvar conta...");
+
+                const loginInput = document.getElementById('newInfoUser');
+                const senhaInput = document.getElementById('newInfoPass');
+                const tipoInput = document.querySelector('input[name="newTipoUser"]:checked');
+
+                // Verifica se os campos existem
+                if (!loginInput || !senhaInput) {
+                    return alert("Erro interno: Campos não encontrados no HTML.");
+                }
+
+                const login = loginInput.value;
+                const senha = senhaInput.value;
+                const tipo = tipoInput ? tipoInput.value : 'Funcionario';
+
+                if(!login || !senha) return alert('Por favor, preencha usuário e senha.');
+
+                try {
+                    console.log("Enviando dados:", { login, senha, tipo });
+                    const res = await fetch('/api/usuarios', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ login, senha, tipo })
+                    });
+
+                    // Verifica se a resposta é válida
+                    const contentType = res.headers.get("content-type");
+                    if (contentType && contentType.indexOf("application/json") !== -1) {
+                         const data = await res.json();
+                         if (res.ok) {
+                            alert('Conta criada com sucesso!');
+                            // Limpa e reseta visual
+                            loginInput.value = '';
+                            senhaInput.value = '';
+                            formNovoUsuario.style.display = 'none';
+                            document.getElementById('lista-usuarios-container').style.display = 'block';
+                            btnAbrirForm.style.display = 'inline-block';
+                            carregarListaUsuarios();
+                        } else {
+                            alert('Erro do servidor: ' + data.message);
+                        }
+                    } else {
+                        // Se o servidor devolveu HTML (erro 404 ou crash), avisa o usuário
+                        console.error(await res.text());
+                        alert('Erro grave: O servidor não reconheceu o pedido de cadastro. Verifique se o arquivo server.js foi salvo corretamente.');
+                    }
+
+                } catch(e) { 
+                    console.error(e);
+                    alert('Erro de conexão ao tentar salvar.'); 
+                }
+            });
+        }
+        
     }
 
 });

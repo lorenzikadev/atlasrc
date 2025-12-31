@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Packing List | SRC Centrífugas</title>
+  
+  <!-- CSS Principal -->
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+  <style>
+    /* Estilos da Tabela (Padrão Dark/Laranja) */
+    #plTable { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.95rem; }
+    #plTable th, #plTable td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #3a3c53; }
+    #plTable thead th { background-color: #1A2035; color: #E67E22; font-weight: bold; text-transform: uppercase; }
+    #plTable tbody tr { transition: background-color 0.3s ease; cursor: pointer; }
+    #plTable tbody tr:hover { background-color: #2e354a; }
+    #plTable tbody td { color: #a9a9c8; }
+    
+    /* Badges de Status */
+    .status-badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8rem; }
+    .status-rascunho { background-color: #f39c12; color: #fff; }
+    .status-assinado { background-color: #27ae60; color: #fff; }
+
+    /* Botões de Ação */
+    .btn-icon { background: none; border: none; cursor: pointer; font-size: 1.1rem; margin-right: 8px; transition: transform 0.2s; }
+    .btn-icon:hover { transform: scale(1.1); opacity: 0.9; }
+    
+    .btn-edit { color: #3498db; }    /* Azul */
+    .btn-copy { color: #f1c40f; }    /* Amarelo */
+    .btn-delete { color: #e74c3c; }  /* Vermelho */
+    .btn-sign { color: #2ecc71; }    /* Verde (Assinar) */
+    .btn-pdf { color: #e74c3c; }     /* Vermelho (PDF) */
+    .btn-disabled { color: #555; cursor: not-allowed; }
+  </style>
+</head>
+
+<body class="dashboard-page sidebar-container">
+  <div class="dashboard-container">
+    
+    <header class="header-main">
+      <div class="header-logo">
+        <a href="/dashboard.html" class="header-logo-link"><h2>SRC Centrífugas</h2></a>
+      </div>
+      <div class="header-title">
+        <h1>Packing List</h1>
+      </div>
+    </header>
+
+    <!-- SIDEBAR (Idêntica ao Dashboard) -->
+    <aside class="sidebar">
+      <button class="sidebar-toggle" id="sidebar-toggle"><i class="fas fa-bars"></i></button>
+
+      <div class="user-profile clickable" id="user-profile-btn">
+        <div class="user-icon"><img src="placeholder-avatar.png" class="profile-pic-avatar"></div>
+        <div class="user-details"><h3>Rodrigo A.</h3><p>rodrigogteste@gmail.com</p></div>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <ul>
+          <li><a href="/configuracoes.html"><i class="fas fa-cog"></i> <span>Configurações da Conta</span></a></li>
+          <li><a href="/mudar-senha.html"><i class="fas fa-key"></i> <span>Mudar a senha</span></a></li>
+          <li class="nav-separator"></li> 
+          <li><a href="/cadastro-produto.html"><i class="fas fa-plus-circle"></i> <span>Cadastro de Produtos</span></a></li>
+          <li><a href="/estoque.html"><i class="fas fa-warehouse"></i> <span>Estoque</span></a></li>
+          <li><a href="/propostas.html"><i class="fas fa-file-invoice-dollar"></i> <span>Propostas Comerciais</span></a></li>
+          <li><a href="/faturas.html"><i class="fas fa-file-contract"></i> <span>Faturas Comerciais</span></a></li>
+          <!-- ITEM ATIVO -->
+          <li><a href="/packing-list.html" class="active"><i class="fas fa-boxes"></i> <span>Packing List</span></a></li>
+          <li><a href="/clientes.html"><i class="fas fa-users"></i> <span>Clientes e Fornecedores</span></a></li>
+          <li class="nav-separator"></li>
+          <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> <span>Sair</span></a></li>
+        </ul>
+      </nav>
+    </aside> 
+    
+    <main class="main-content" id="main-content">
+      <div class="page-header">
+          <h2>Listagem de Packing Lists</h2>
+          <a href="cadastro-packing-list.html" class="btn-primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+              <i class="fas fa-plus"></i> Novo Packing List
+          </a>
+      </div>
+
+      <div class="table-container">
+          <table id="plTable">
+              <thead>
+                  <tr>
+                      <th>Referência</th>
+                      <th>Cliente</th>
+                      <th>Data</th>
+                      <th>Volumes</th>
+                      <th>Peso Bruto</th>
+                      <th style="text-align: center;">Status</th>
+                      <th style="text-align: center;">Ações</th>
+                  </tr>
+              </thead>
+              <tbody id="listaPlBody">
+                  <tr><td colspan="7" style="text-align: center; padding: 30px;">Carregando...</td></tr>
+              </tbody>
+          </table>
+      </div>
+    </main>
+  </div>
+  
+  <script src="main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', carregarPackingLists);
+
+    async function carregarPackingLists() {
+        try {
+            const res = await fetch('/api/packing-lists');
+            const lista = await res.json();
+            const tbody = document.getElementById('listaPlBody');
+            tbody.innerHTML = '';
+
+            if (!lista || lista.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px;">Nenhum documento encontrado.</td></tr>';
+                return;
+            }
+
+            lista.forEach(pl => {
+                const statusClass = pl.assinada ? 'status-assinado' : 'status-rascunho';
+                const statusTxt = pl.assinada ? 'ASSINADO' : 'RASCUNHO';
+
+                let botoes = '';
+                
+                // Botão Editar (Sempre visível para visualizar)
+                botoes += `<a href="cadastro-packing-list.html?id=${pl.id}" class="btn-icon btn-edit" title="Editar/Visualizar"><i class="fas fa-edit"></i></a>`;
+                
+                // Botão Duplicar
+                botoes += `<button onclick="duplicar(${pl.id}, event)" class="btn-icon btn-copy" title="Duplicar"><i class="fas fa-copy"></i></button>`;
+                
+                // LÓGICA DE ASSINATURA VS PDF
+                if(!pl.assinada) {
+                    // Se NÃO assinado: Botão de Assinar e Excluir
+                    botoes += `<button onclick="assinarLista(${pl.id}, event)" class="btn-icon btn-sign" title="Assinar Eletronicamente"><i class="fas fa-file-signature"></i></button>`;
+                    botoes += `<button onclick="excluir(${pl.id}, event)" class="btn-icon btn-delete" title="Excluir"><i class="fas fa-trash"></i></button>`;
+                } else {
+                    // Se ASSINADO: Botão de PDF
+                    botoes += `<a href="cadastro-packing-list.html?id=${pl.id}&print=true" class="btn-icon btn-pdf" title="Baixar PDF"><i class="fas fa-file-pdf"></i></a>`;
+                }
+
+                const tr = document.createElement('tr');
+                // Clique na linha abre cadastro (salvo se clicar em botão)
+                tr.onclick = (e) => { 
+                    if(!e.target.closest('button') && !e.target.closest('a')) {
+                        window.location.href=`cadastro-packing-list.html?id=${pl.id}`; 
+                    }
+                };
+                
+                tr.innerHTML = `
+                    <td style="font-weight:bold; color:#fff">${pl.ref || '-'}</td>
+                    <td>${pl.clienteNome || '-'}</td>
+                    <td>${pl.dataEmissao || '-'}</td>
+                    <td>${pl.totalVolumes || 0}</td>
+                    <td style="color:#2ecc71">${pl.pesoBrutoTotal || 0} Kg</td>
+                    <td style="text-align: center;"><span class="status-badge ${statusClass}">${statusTxt}</span></td>
+                    <td style="text-align: center;">${botoes}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (e) {
+            console.error("Erro ao carregar lista:", e);
+        }
+    }
+
+    async function duplicar(id, e) {
+        e.stopPropagation();
+        if(confirm("Deseja duplicar este Packing List?")) {
+            await fetch(`/api/packing-lists/${id}/duplicar`, { method: 'POST' });
+            carregarPackingLists();
+        }
+    }
+
+    async function excluir(id, e) {
+        e.stopPropagation();
+        if(confirm("Tem certeza que deseja excluir permanentemente?")) {
+            await fetch(`/api/packing-lists/${id}`, { method: 'DELETE' });
+            carregarPackingLists();
+        }
+    }
+
+    // Nova função para assinar direto da lista
+    async function assinarLista(id, e) {
+        e.stopPropagation();
+        if(confirm("ATENÇÃO: Ao assinar, o documento será finalizado e pronto para PDF.\n\nDeseja confirmar a assinatura eletrônica?")) {
+            const res = await fetch(`/api/packing-lists/${id}/assinar`, { method: 'POST' });
+            if(res.ok) {
+                carregarPackingLists(); // Recarrega para mostrar o botão de PDF
+            } else {
+                alert("Erro ao assinar.");
+            }
+        }
+    }
+  </script>
+</body>
+</html>

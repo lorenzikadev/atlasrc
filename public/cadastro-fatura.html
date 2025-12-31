@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Fatura - Atlas ERP</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        /* Estilos do Modo Escuro (Tela) */
+        body { background-color: #1a202c; color: #cbd5e0; }
+        .sidebar { background-color: #2d3748; }
+        .input-dark { 
+            background-color: #2d3748; 
+            border: 1px solid #4a5568; 
+            color: white; 
+        }
+        .input-dark:focus { 
+            border-color: #dd6b20; 
+            outline: none; 
+            box-shadow: 0 0 0 3px rgba(221, 107, 32, 0.3); 
+        }
+        .card-header-orange { color: #dd6b20; font-weight: bold; text-transform: uppercase; font-size: 0.875rem; margin-bottom: 0.5rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.25rem;}
+        
+        /* Estilo da Lupa */
+        .search-btn { background-color: #4a5568; color: white; border: 1px solid #4a5568; }
+        .search-btn:hover { background-color: #dd6b20; border-color: #dd6b20; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden font-sans">
+
+    <aside class="w-64 sidebar flex flex-col shadow-lg z-10 hidden md:flex">
+        <div class="p-6 text-center font-bold text-2xl tracking-wider border-b border-gray-600 text-white">
+            ATLAS <span class="text-blue-400 text-xs block font-normal">ERP SYSTEM</span>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-4 space-y-1">
+            <a href="faturas.html" class="flex items-center px-6 py-3 bg-gray-700 text-white border-l-4 border-orange-500">
+                <i class="fas fa-arrow-left w-6"></i> Voltar para Lista
+            </a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden relative bg-gray-900">
+        
+        <div class="h-16 bg-gray-800 shadow flex items-center justify-between px-8 border-b border-gray-700">
+            <h1 class="font-bold text-xl text-white">Nova Fatura Comercial</h1>
+            <div>
+                <button onclick="salvarFatura()" id="btnSalvar" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded shadow font-bold transition">
+                    <i class="fas fa-save mr-2"></i> Salvar Fatura
+                </button>
+                <button onclick="gerarPDF()" id="btnPDF" class="hidden bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded shadow font-bold transition ml-3">
+                    <i class="fas fa-file-pdf mr-2"></i> Baixar PDF
+                </button>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-8">
+            
+            <div class="max-w-5xl mx-auto space-y-6">
+
+                <div class="bg-white rounded shadow p-6 text-gray-800">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h3 class="card-header-orange">Exportador</h3>
+                            <p class="font-bold">RODRIGO A. AMORIM CENTRIFUGAS</p>
+                            <p class="text-sm">Rua Colômbia, 36 - Jd. Belo Horizonte; 1350-184</p>
+                            <p class="text-sm">CNPJ: 07.176.742/001-11</p>
+                            <p class="text-sm">Telefone: (19) 99208-0035</p>
+                            <p class="text-sm">E-mail: comex@srccentrifugas.com.br</p>
+                        </div>
+                        <div>
+                            <h3 class="card-header-orange">Dados Bancários para Pagamento</h3>
+                            <p class="text-sm"><span class="font-bold">Banco:</span> Santander</p>
+                            <p class="text-sm"><span class="font-bold">IBAN:</span> BR8690400888000900130131417C1</p>
+                            <p class="text-sm"><span class="font-bold">SWIFT:</span> BSCHBRSPXXX</p>
+                            <p class="text-sm"><span class="font-bold">Agência:</span> 0090 | <span class="font-bold">Conta:</span> 130131417</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <div class="space-y-4">
+                        <h3 class="text-white font-bold text-lg border-b border-gray-700 pb-2">Dados da Fatura</h3>
+                        
+                        <div>
+                            <label class="block text-gray-400 text-sm mb-1">No. da Fatura Comercial</label>
+                            <input type="text" id="numFatura" class="w-full input-dark rounded p-2" placeholder="Ex: 196-25 BO">
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-400 text-sm mb-1">Data de Emissão</label>
+                            <input type="date" id="dataEmissao" class="w-full input-dark rounded p-2">
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-400 text-sm mb-1">Referência Interna</label>
+                            <input type="text" id="refInterna" class="w-full input-dark rounded p-2">
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-400 text-sm mb-1">Incoterms</label>
+                            <select id="incoterm" class="w-full input-dark rounded p-2">
+                                <option value="FCA">FCA - Free Carrier</option>
+                                <option value="EXW">EXW - Ex Works</option>
+                                <option value="FOB">FOB - Free on Board</option>
+                                <option value="CIP">CIP - Carriage and Insurance Paid To</option>
+                                <option value="DAP">DAP - Delivered at Place</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <h3 class="text-white font-bold text-lg border-b border-gray-700 pb-2">Cliente & Logística</h3>
+                        
+                        <div class="relative">
+                            <label class="block text-gray-400 text-sm mb-1">Cliente (Importador)</label>
+                            <div class="flex">
+                                <input type="text" id="clienteNome" class="w-full input-dark rounded-l p-2" placeholder="Digite ou busque...">
+                                <button onclick="toggleBuscaCliente()" class="search-btn px-4 rounded-r transition">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                            <div id="dropdownClientes" class="hidden absolute w-full bg-gray-800 border border-gray-600 shadow-xl z-50 max-h-40 overflow-y-auto mt-1">
+                                </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-400 text-sm mb-1">Endereço do Importador</label>
+                            <textarea id="clienteEndereco" class="w-full input-dark rounded p-2 h-24 text-sm"></textarea>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-gray-400 text-xs mb-1">Local de Embarque</label>
+                                <input type="text" id="localEmbarque" class="w-full input-dark rounded p-2 text-sm" value="Santa Bárbara D'Oeste, SP - Brasil">
+                            </div>
+                            <div>
+                                <label class="block text-gray-400 text-xs mb-1">Local de Destino</label>
+                                <input type="text" id="localDestino" class="w-full input-dark rounded p-2 text-sm">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-white font-bold text-lg border-b border-gray-700 pb-2 mb-4">Itens da Fatura</h3>
+                    
+                    <div class="flex gap-2 mb-4 bg-gray-800 p-3 rounded border border-gray-700 items-end">
+                        <div class="flex-1">
+                            <label class="text-xs text-gray-400">Produto do Estoque</label>
+                            <select id="selectProduto" class="w-full input-dark rounded p-2 text-sm">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="w-24">
+                            <label class="text-xs text-gray-400">Qtd</label>
+                            <input type="number" id="qtdItem" class="w-full input-dark rounded p-2 text-sm" value="1">
+                        </div>
+                        <button onclick="adicionarItem()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-bold h-10">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+
+                    <div class="bg-gray-800 rounded shadow overflow-hidden border border-gray-700">
+                        <table class="w-full text-left text-gray-300">
+                            <thead>
+                                <tr class="bg-gray-700 text-orange-500 text-xs uppercase">
+                                    <th class="p-3">Qtd</th>
+                                    <th class="p-3">SKU</th>
+                                    <th class="p-3 w-1/3">Descrição</th>
+                                    <th class="p-3">NCM</th>
+                                    <th class="p-3">UN</th>
+                                    <th class="p-3">Preço (USD)</th>
+                                    <th class="p-3">Total</th>
+                                    <th class="p-3 text-center"><i class="fas fa-trash"></i></th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaItens" class="text-sm divide-y divide-gray-700">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-gray-400 text-sm mb-1">Descrição Complementar (Azul na Impressão)</label>
+                    <textarea id="obs" class="w-full input-dark rounded p-2 h-20 text-blue-300" placeholder="Observações extras..."></textarea>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <div id="printTemplate" class="hidden bg-white text-black font-sans text-xs" style="width: 210mm; padding: 10mm;">
+        
+        <div style="background-color: #8faadc; border: 1px solid #000; padding: 10px; text-align: center; font-weight: bold; font-size: 14px; margin-bottom: 20px;">
+            COMMERCIAL INVOICE FECHA <span id="pdfData"></span>
+            <br>
+            <span id="pdfNumFatura" style="font-size: 16px;"></span>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+            <div style="width: 48%;">
+                <p style="font-weight: bold; margin-bottom: 5px;">IMPORTADOR, CONSIGNATÁRIO E NOTIFICADO:</p>
+                <div id="pdfCliente" style="margin-bottom: 15px;"></div>
+
+                <p style="font-weight: bold; margin-bottom: 2px;">CONDIÇÕES DE PAGAMENTO:</p>
+                <p>100% del monto total em la confirmación del pedido</p>
+                
+                <p style="margin-top: 10px;"><span style="font-weight: bold;">PAÍS DE ORIGEM:</span> Brasil</p>
+
+                <p style="font-weight: bold; margin-top: 15px; margin-bottom: 2px;">MODAL DE TRANSPORTE: <span style="font-weight: normal;">Rodoviário</span></p>
+                <p><span style="font-weight: bold;">DE:</span> <span id="pdfOrigem"></span></p>
+                <p><span style="font-weight: bold;">PARA:</span> <span id="pdfDestino"></span></p>
+            </div>
+
+            <div style="width: 48%;">
+                <p style="font-weight: bold; margin-bottom: 5px;">EXPORTADOR:</p>
+                <p style="line-height: 1.4;">
+                    Rodrigo A. Amorim Centrifugas<br>
+                    Rua Colômbia, 36 – Jd. Belo Horizonte; 13450-184<br>
+                    CNPJ: 07.176.742/001-11<br>
+                    +55 (19) 99208-0035<br>
+                    <span style="color: blue;">comex@srccentrifugas.com.br</span>
+                </p>
+
+                <p style="font-weight: bold; margin-top: 15px; margin-bottom: 5px;">INFORMAÇÕES BANCÁRIAS:</p>
+                <p style="line-height: 1.4;">
+                    Banco Santander<br>
+                    IBAN: BR8690400888000900130131417C1<br>
+                    SWIFT: BSCHBRSPXXX<br>
+                    AGÊNCIA: 0090 CONTA: 130131417
+                </p>
+
+                <p style="margin-top: 15px;"><span style="font-weight: bold;">INCOTERM:</span> <span id="pdfIncoterm"></span></p>
+            </div>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 10px;">
+            <thead>
+                <tr style="background-color: #8faadc; font-weight: bold;">
+                    <th style="border: 1px solid black; padding: 4px;">QTD</th>
+                    <th style="border: 1px solid black; padding: 4px;">CÓDIGO</th>
+                    <th style="border: 1px solid black; padding: 4px; width: 30%;">DESCRIÇÃO</th>
+                    <th style="border: 1px solid black; padding: 4px;">NCM</th>
+                    <th style="border: 1px solid black; padding: 4px;">UN.</th>
+                    <th style="border: 1px solid black; padding: 4px;">PREÇO UNITÁRIO (USD)</th>
+                    <th style="border: 1px solid black; padding: 4px;">PREÇO TOTAL (USD)</th>
+                    <th style="border: 1px solid black; padding: 4px;">ORIGEM</th>
+                </tr>
+            </thead>
+            <tbody id="pdfTabelaBody">
+                </tbody>
+            <tfoot>
+                <tr style="background-color: #8faadc; font-weight: bold;">
+                    <td colspan="6" style="border: 1px solid black; padding: 4px; text-align: right;">TOTAL <span id="pdfTotalLabel"></span></td>
+                    <td style="border: 1px solid black; padding: 4px;" id="pdfTotalValor"></td>
+                    <td style="border: 1px solid black; padding: 4px;"></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div id="pdfObs" style="margin-top: 20px; color: #1a3c8a; font-weight: bold; white-space: pre-wrap;"></div>
+
+        <div style="margin-top: 50px; display: flex; justify-content: flex-end;">
+             <div style="text-align: center; width: 200px;">
+                <p style="font-family: 'Brush Script MT', cursive; font-size: 20px; margin-bottom: 5px;">Rodrigo Amorim</p>
+                 <div style="border-top: 1px solid black; padding-top: 5px;">Assinatura do Exportador</div>
+             </div>
+        </div>
+    </div>
+
+    <script>
+        let itens = [];
+        let produtosDb = [];
+        let clientesDb = [];
+        let currentId = null;
+        let isAssinada = false;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await carregarDadosBasicos();
+            
+            // Verifica se é edição
+            const params = new URLSearchParams(window.location.search);
+            currentId = params.get('id');
+            const autoPrint = params.get('print');
+
+            if (currentId) {
+                await carregarFatura(currentId);
+            }
+
+            if (autoPrint === 'true') {
+                setTimeout(gerarPDF, 1000); // Espera carregar e dispara PDF
+            }
+        });
+
+        async function carregarDadosBasicos() {
+            // Carregar Produtos para o Select
+            try {
+                const resP = await fetch('/api/produtos');
+                produtosDb = await resP.json();
+                const sel = document.getElementById('selectProduto');
+                produtosDb.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = JSON.stringify(p); // Guarda objeto todo no value
+                    opt.text = `${p.sku || 'N/A'} - ${p.nome}`;
+                    sel.appendChild(opt);
+                });
+
+                // Carregar Clientes para a Lupa
+                const resC = await fetch('/api/clientes');
+                clientesDb = await resC.json();
+            } catch (e) { console.error("Erro ao carregar dados", e); }
+        }
+
+        // --- LÓGICA DE CLIENTES ---
+        function toggleBuscaCliente() {
+            const drop = document.getElementById('dropdownClientes');
+            drop.innerHTML = '';
+            
+            if (clientesDb.length === 0) {
+                drop.innerHTML = '<div class="p-2 text-gray-400 text-sm">Nenhum cliente cadastrado</div>';
+            }
+
+            clientesDb.forEach(c => {
+                const div = document.createElement('div');
+                div.className = "p-2 hover:bg-gray-700 cursor-pointer text-gray-300 border-b border-gray-600";
+                div.innerHTML = `<strong>${c.nome}</strong> <span class="text-xs text-gray-500 block">${c.cidade || ''} - ${c.pais || ''}</span>`;
+                div.onclick = () => {
+                    document.getElementById('clienteNome').value = c.nome;
+                    // Tenta preencher endereço se existir
+                    let end = c.endereco || '';
+                    if (c.cidade) end += `\n${c.cidade}`;
+                    if (c.pais) end += `, ${c.pais}`;
+                    document.getElementById('clienteEndereco').value = end;
+                    drop.classList.add('hidden');
+                };
+                drop.appendChild(div);
+            });
+            drop.classList.toggle('hidden');
+        }
+
+        // --- LÓGICA DE ITENS ---
+        function adicionarItem() {
+            const sel = document.getElementById('selectProduto');
+            const qtdInput = document.getElementById('qtdItem');
+            
+            if (!sel.value) return alert("Selecione um produto.");
+            
+            const prod = JSON.parse(sel.value);
+            const qtd = parseFloat(qtdInput.value) || 1;
+            const preco = parseFloat(prod.preco || 0); // Ajuste conforme seu DB de produtos
+
+            itens.push({
+                sku: prod.sku || '000',
+                nome: prod.nome,
+                ncm: prod.ncm || '',
+                un: prod.unidadeMedida || 'UN',
+                preco: preco,
+                qtd: qtd,
+                total: preco * qtd
+            });
+
+            renderItens();
+        }
+
+        function removerItem(idx) {
+            itens.splice(idx, 1);
+            renderItens();
+        }
+
+        function renderItens() {
+            const tbody = document.getElementById('tabelaItens');
+            tbody.innerHTML = itens.map((item, i) => `
+                <tr class="hover:bg-gray-800 transition">
+                    <td class="p-3">${item.qtd}</td>
+                    <td class="p-3">${item.sku}</td>
+                    <td class="p-3">${item.nome}</td>
+                    <td class="p-3">${item.ncm}</td>
+                    <td class="p-3">${item.un}</td>
+                    <td class="p-3">$ ${item.preco.toFixed(2)}</td>
+                    <td class="p-3 font-bold text-green-400">$ ${item.total.toFixed(2)}</td>
+                    <td class="p-3 text-center text-red-500 cursor-pointer" onclick="removerItem(${i})"><i class="fas fa-trash"></i></td>
+                </tr>
+            `).join('');
+        }
+
+        // --- SALVAR ---
+        async function salvarFatura() {
+            if (isAssinada) return alert("Fatura já emitida. Não é possível alterar.");
+
+            const payload = {
+                numeroFatura: document.getElementById('numFatura').value,
+                dataEmissao: document.getElementById('dataEmissao').value,
+                refInterna: document.getElementById('refInterna').value,
+                incoterm: document.getElementById('incoterm').value,
+                clienteNome: document.getElementById('clienteNome').value,
+                clienteEndereco: document.getElementById('clienteEndereco').value,
+                localEmbarque: document.getElementById('localEmbarque').value,
+                localDestino: document.getElementById('localDestino').value,
+                obs: document.getElementById('obs').value,
+                itens: itens,
+                totalFinal: itens.reduce((acc, i) => acc + i.total, 0)
+            };
+
+            const method = currentId ? 'PUT' : 'POST';
+            const url = currentId ? `/api/faturas/${currentId}` : '/api/faturas';
+            
+            // Adicione cabeçalho body
+            payload.id = currentId ? parseInt(currentId) : undefined;
+
+            const res = await fetch(url, {
+                method: method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+
+            const json = await res.json();
+            if (json.success) {
+                alert("Fatura Salva!");
+                if (!currentId) window.location.href = 'faturas.html';
+            } else {
+                alert("Erro: " + json.message);
+            }
+        }
+
+        async function carregarFatura(id) {
+            const res = await fetch(`/api/faturas/${id}`);
+            if (res.ok) {
+                const f = await res.json();
+                
+                document.getElementById('numFatura').value = f.numeroFatura || '';
+                document.getElementById('dataEmissao').value = f.dataEmissao || '';
+                document.getElementById('refInterna').value = f.refInterna || '';
+                document.getElementById('incoterm').value = f.incoterm || 'FCA';
+                document.getElementById('clienteNome').value = f.clienteNome || '';
+                document.getElementById('clienteEndereco').value = f.clienteEndereco || '';
+                document.getElementById('localEmbarque').value = f.localEmbarque || '';
+                document.getElementById('localDestino').value = f.localDestino || '';
+                document.getElementById('obs').value = f.obs || '';
+                
+                itens = f.itens || [];
+                renderItens();
+
+                if (f.assinada) {
+                    isAssinada = true;
+                    document.getElementById('btnPDF').classList.remove('hidden');
+                    document.getElementById('btnSalvar').classList.add('hidden');
+                    document.querySelectorAll('input, select, textarea, button:not(#btnPDF)').forEach(el => el.disabled = true);
+                }
+            }
+        }
+
+        // --- GERAR PDF ---
+        function gerarPDF() {
+            // 1. Preenche o template oculto com os dados da tela
+            document.getElementById('pdfData').innerText = document.getElementById('dataEmissao').value.split('-').reverse().join('.');
+            document.getElementById('pdfNumFatura').innerText = document.getElementById('numFatura').value;
+            
+            // Cliente Info
+            const cliNome = document.getElementById('clienteNome').value;
+            const cliEnd = document.getElementById('clienteEndereco').value;
+            document.getElementById('pdfCliente').innerHTML = `<span style="font-weight:bold; color: #1a3c8a;">${cliNome}</span><br>${cliEnd.replace(/\n/g, '<br>')}`;
+            
+            document.getElementById('pdfOrigem').innerText = document.getElementById('localEmbarque').value;
+            document.getElementById('pdfDestino').innerText = document.getElementById('localDestino').value;
+            document.getElementById('pdfIncoterm').innerText = document.getElementById('incoterm').value;
+            document.getElementById('pdfObs').innerText = document.getElementById('obs').value;
+
+            // Tabela PDF
+            const tbody = document.getElementById('pdfTabelaBody');
+            tbody.innerHTML = itens.map(i => `
+                <tr>
+                    <td style="border: 1px solid black; padding: 4px;">${i.qtd}</td>
+                    <td style="border: 1px solid black; padding: 4px;">${i.sku}</td>
+                    <td style="border: 1px solid black; padding: 4px; text-align: left;">${i.nome}</td>
+                    <td style="border: 1px solid black; padding: 4px;">${i.ncm}</td>
+                    <td style="border: 1px solid black; padding: 4px;">${i.un}</td>
+                    <td style="border: 1px solid black; padding: 4px;">$ ${i.preco.toFixed(2)}</td>
+                    <td style="border: 1px solid black; padding: 4px;">$ ${i.total.toFixed(2)}</td>
+                    <td style="border: 1px solid black; padding: 4px;">Brasil</td>
+                </tr>
+            `).join('');
+
+            const total = itens.reduce((acc, i) => acc + i.total, 0);
+            document.getElementById('pdfTotalValor').innerText = `$ ${total.toFixed(2)}`;
+            document.getElementById('pdfTotalLabel').innerText = document.getElementById('incoterm').value;
+
+            // 2. Dispara a biblioteca
+            const el = document.getElementById('printTemplate');
+            el.classList.remove('hidden');
+
+            const opt = {
+                margin: 5,
+                filename: `Invoice_${document.getElementById('numFatura').value}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(el).save().then(() => {
+                el.classList.add('hidden');
+                // Se foi disparado automaticamente, volta pra lista
+                if (window.location.search.includes('print=true')) {
+                   // window.location.href = 'faturas.html'; // opcional
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Faturas Comerciais | SRC Centrífugas</title>
+  <!-- Mantendo seu CSS Original -->
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  
+  <!-- Estilos Específicos para a Tabela de Faturas (Para não precisar mexer no style.css agora) -->
+  <style>
+    .faturas-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 0 20px;
+    }
+
+    .btn-nova-fatura {
+        background-color: #e67e22; /* Laranja do seu tema */
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        font-weight: bold;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: background 0.3s;
+    }
+    .btn-nova-fatura:hover { background-color: #d35400; }
+
+    /* Tabela Estilizada Dark/Orange */
+    .table-container {
+        padding: 0 20px;
+        overflow-x: auto;
+    }
+    .atlas-table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #2c3e50; /* Fundo escuro compatível com sidebar */
+        color: #ecf0f1;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .atlas-table thead {
+        background-color: #e67e22; /* Cabeçalho Laranja */
+        color: white;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+    }
+    .atlas-table th, .atlas-table td {
+        padding: 15px;
+        text-align: left;
+        border-bottom: 1px solid #34495e;
+    }
+    .atlas-table tbody tr:hover {
+        background-color: #34495e;
+    }
+    
+    /* Badges de Status */
+    .badge {
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    .badge-rascunho { background-color: #f1c40f; color: #2c3e50; }
+    .badge-emitida { background-color: #27ae60; color: white; }
+
+    /* Ações */
+    .action-btn {
+        background: none;
+        border: none;
+        color: #bdc3c7;
+        cursor: pointer;
+        font-size: 1.1rem;
+        margin: 0 5px;
+        transition: color 0.2s;
+    }
+    .action-btn:hover { color: white; }
+    .action-btn.edit:hover { color: #3498db; }
+    .action-btn.sign:hover { color: #2ecc71; }
+    .action-btn.pdf:hover { color: #e74c3c; }
+
+    /* Dropdown simples para ações (opcional, ou botões diretos) */
+    .actions-cell { display: flex; align-items: center; }
+  </style>
+</head>
+
+<!-- Mantendo as classes do body original -->
+<body class="dashboard-page sidebar-container">
+  <div class="dashboard-container">
+    
+    <!-- HEADER IGUAL AO DASHBOARD -->
+    <header class="header-main">
+      <div class="header-logo">
+        <a href="/dashboard.html" class="header-logo-link">
+          <h2>SRC Centrífugas</h2>
+        </a>
+      </div>
+      <div class="header-title">
+        <h1>Faturas Comerciais</h1>
+      </div>
+    </header>
+
+    <!-- SIDEBAR IDÊNTICA AO DASHBOARD -->
+    <aside class="sidebar">
+      <button class="sidebar-toggle" id="sidebar-toggle">
+          <i class="fas fa-bars"></i>
+      </button>
+
+      <div class="header-logo" style="display: none;">
+        <a href="/dashboard.html" class="header-logo-link">
+          <h2>SRC Centrífugas</h2>
+        </a>
+      </div>
+
+      <div class="user-profile clickable" id="user-profile-btn">
+        <div class="user-icon">
+          <img src="placeholder-avatar.png" alt="Foto do Perfil" id="sidebar-profile-pic" class="profile-pic-avatar">
+        </div>
+        <div class="user-details">
+          <h3>Rodrigo A.</h3>
+          <p>rodrigogteste@gmail.com</p>
+        </div>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <ul>
+            <li><a href="/configuracoes.html"><i class="fas fa-cog"></i> <span>Configurações da Conta</span></a></li>
+          <li><a href="/mudar-senha.html"><i class="fas fa-key"></i> <span>Mudar a senha</span></a></li>
+          
+          <li class="nav-separator"></li> 
+          
+          <li><a href="/cadastro-produto.html"><i class="fas fa-plus-circle"></i> <span>Cadastro de Produtos</span></a></li>
+          <li><a href="/estoque.html"><i class="fas fa-warehouse"></i> <span>Estoque</span></a></li>
+          <li><a href="/propostas.html"><i class="fas fa-file-invoice-dollar"></i> <span>Propostas Comerciais</span></a></li>
+          
+          <!-- ITEM ATIVO AQUI -->
+          <li><a href="/faturas.html" class="active"><i class="fas fa-file-contract"></i> <span>Faturas Comerciais</span></a></li>
+          <li><a href="/packing-list.html"><i class="fas fa-boxes"></i> <span>Packing List</span></a></li>
+          
+          <li><a href="/clientes.html"><i class="fas fa-users"></i> <span>Clientes e Fornecedores</span></a></li>
+          
+          <li class="nav-separator"></li>
+          
+          <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> <span>Sair</span></a></li>
+        </ul>
+      </nav>
+    </aside> 
+    
+    <!-- CONTEÚDO PRINCIPAL (Diferente do Dashboard, aqui vai a tabela) -->
+    <main class="main-content" id="main-content">
+      
+      <!-- Cabeçalho Interno com Botão -->
+      <div class="faturas-header">
+          <h2 style="color: #ecf0f1;">Gerenciar Faturas</h2>
+          <a href="cadastro-fatura.html" class="btn-nova-fatura">
+              <i class="fas fa-plus"></i> Nova Fatura
+          </a>
+      </div>
+
+      <!-- Tabela -->
+      <div class="table-container">
+          <table class="atlas-table">
+              <thead>
+                  <tr>
+                      <th>Nº Fatura</th>
+                      <th>Cliente (Importador)</th>
+                      <th>Data Emissão</th>
+                      <th>Total (USD)</th>
+                      <th style="text-align: center;">Status</th>
+                      <th style="text-align: center;">Ações</th>
+                  </tr>
+              </thead>
+              <tbody id="tabelaFaturas">
+                  <tr>
+                      <td colspan="6" style="text-align: center; color: #95a5a6; padding: 30px;">
+                          <i class="fas fa-spinner fa-spin"></i> Carregando faturas...
+                      </td>
+                  </tr>
+              </tbody>
+          </table>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- MODAL DE PERFIL (Mantendo compatibilidade caso o main.js chame) -->
+  <div id="user-profile-modal" class="modal">
+    <!-- Conteúdo do modal igual ao dashboard, omitido aqui para brevidade, mas o main.js cuida dele -->
+     <div class="modal-content"><span class="close-button">&times;</span><p>Carregando perfil...</p></div>
+  </div>
+
+  <!-- Script Lógico da Página -->
+  <script>
+    document.addEventListener('DOMContentLoaded', carregarFaturas);
+
+    async function carregarFaturas() {
+        try {
+            const response = await fetch('/api/faturas');
+            const faturas = await response.json();
+            const tbody = document.getElementById('tabelaFaturas');
+            
+            tbody.innerHTML = '';
+
+            if (!faturas || faturas.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px;">Nenhuma fatura encontrada.</td></tr>';
+                return;
+            }
+
+            faturas.forEach(fatura => {
+                const totalFormatado = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(fatura.totalFinal || 0);
+                
+                let badgeHtml = fatura.assinada 
+                    ? '<span class="badge badge-emitida">EMITIDA</span>' 
+                    : '<span class="badge badge-rascunho">RASCUNHO</span>';
+
+                // Lógica de botões
+                let botoesHtml = '';
+                
+                // Botão Editar (Sempre visível para ver detalhes)
+                botoesHtml += `<a href="cadastro-fatura.html?id=${fatura.id}" class="action-btn edit" title="Editar/Ver"><i class="fas fa-edit"></i></a>`;
+                
+                // Botão Assinar (Só se não assinada)
+                if (!fatura.assinada) {
+                    botoesHtml += `<button onclick="assinarFatura(${fatura.id})" class="action-btn sign" title="Assinar Eletronicamente"><i class="fas fa-file-signature"></i></button>`;
+                }
+                
+                // Botão PDF (Só se assinada)
+                if (fatura.assinada) {
+                    botoesHtml += `<a href="cadastro-fatura.html?id=${fatura.id}&print=true" class="action-btn pdf" title="Baixar PDF"><i class="fas fa-file-pdf"></i></a>`;
+                } else {
+                    botoesHtml += `<span style="opacity:0.3; cursor:not-allowed;" class="action-btn"><i class="fas fa-file-pdf"></i></span>`;
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight:bold;">${fatura.numeroFatura || '-'}</td>
+                    <td>${fatura.clienteNome || '---'}</td>
+                    <td>${fatura.dataEmissao || '-'}</td>
+                    <td style="color: #2ecc71; font-weight:bold;">${totalFormatado}</td>
+                    <td style="text-align: center;">${badgeHtml}</td>
+                    <td style="text-align: center;" class="actions-cell">
+                        ${botoesHtml}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+        } catch (error) {
+            console.error('Erro:', error);
+            document.getElementById('tabelaFaturas').innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">Erro ao conectar com servidor.</td></tr>';
+        }
+    }
+
+    async function assinarFatura(id) {
+        if (confirm("ATENÇÃO: Ao assinar, a fatura será finalizada e não poderá mais ser editada.\n\nDeseja confirmar a assinatura eletrônica?")) {
+            try {
+                const res = await fetch(`/api/faturas/${id}/assinar`, { method: 'POST' });
+                const json = await res.json();
+                
+                if (json.success) {
+                    alert("Assinatura registrada com sucesso!");
+                    carregarFaturas();
+                } else {
+                    alert("Erro: " + (json.message || 'Erro desconhecido'));
+                }
+            } catch (e) {
+                alert("Erro de conexão.");
+            }
+        }
+    }
+  </script>
+  
+  <!-- Reutilizando seu main.js para funções globais -->
+  <script src="main.js"></script>
+</body>
+</html>

@@ -3,17 +3,20 @@ const path = require('path');
 const app = express();
 const PORT = 3000; 
 
-// --- BANCO DE DADOS EM MEMÓRIA (Produção vs Teste) ---
+// --- BANCO DE DADOS EM MEMÓRIA ---
+// Adicionado 'faturas' nas estruturas para manter consistência com o sistema
 const db = {
     producao: {
         produtos: [],
         propostas: [],
-        clientes: []
+        clientes: [],
+        faturas: [] 
     },
     teste: {
-        produtos: [], // Dados daqui somem se reiniciar o server, mas ficam separados da produção
+        produtos: [],
         propostas: [],
-        clientes: []    
+        clientes: [],
+        faturas: [] 
     }
 };
 
@@ -54,48 +57,39 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true })); 
 
 // --- HELPER: Selecionar Contexto (Produção ou Teste) ---
-// Verifica se o frontend enviou o header 'x-test-env'
 const getContext = (req) => {
     const isTest = req.headers['x-test-env'] === 'true';
     return isTest ? db.teste : db.producao;
 };
 
-// --- LÓGICA DE PRODUTOS ---
+// ==========================================
+// LÓGICA DE PRODUTOS
+// ==========================================
 app.post('/cadastrar-produto', (req, res) => {
-    const context = getContext(req); // Seleciona o array correto
+    const context = getContext(req);
     let produtoData = req.body;
 
-    // Log de Notificação por E-mail (Feature Solicitada)
-    // Só envia se estiver ativado E se for ambiente de produção (opcional, aqui envia em ambos)
     if (configuracoesCadastro.avisoEmailAtivo && configuracoesCadastro.emailNotificacao) {
-        console.log(`[EMAIL] 📧 Enviando notificação de cadastro para: ${configuracoesCadastro.emailNotificacao} | Produto: ${produtoData.nome}`);
+        console.log(`[EMAIL] 📧 Notificação enviada para: ${configuracoesCadastro.emailNotificacao}`);
     }
 
-    if (produtoData.id !== undefined && produtoData.id !== null && produtoData.id !== "") {
+    if (produtoData.id) {
         // Edição
         const id = parseInt(produtoData.id);
         const index = context.produtos.findIndex(p => p.id === id);
         if (index !== -1) {
-            const dataCadastroOriginal = context.produtos[index].dataCadastro;
-            context.produtos[index] = {
-                ...context.produtos[index],
-                ...produtoData, 
-                dataCadastro: dataCadastroOriginal,
-                id: id 
-            };
-            return res.status(200).json({ message: 'Produto atualizado com sucesso!'}); 
-        } else {
-            return res.status(404).json({ message: 'Erro: Produto não encontrado.' });
+            const dataOriginal = context.produtos[index].dataCadastro;
+            context.produtos[index] = { ...context.produtos[index], ...produtoData, dataCadastro: dataOriginal, id: id };
+            return res.status(200).json({ message: 'Produto atualizado!'}); 
         }
+        return res.status(404).json({ message: 'Produto não encontrado.' });
     } else {
-        // Novo Cadastro
-        produtoData.dataCadastro = new Date().toLocaleString('pt-BR'); 
+        // Novo
+        produtoData.id = Date.now();
+        produtoData.dataCadastro = new Date().toLocaleString('pt-BR');
         produtoData.dataUltimaAlteracao = produtoData.dataCadastro;
-        produtoData.id = context.produtos.length + 1; // ID sequencial simples
         context.produtos.push(produtoData); 
-        
-        console.log(`Novo produto cadastrado no ambiente: ${req.headers['x-test-env'] === 'true' ? 'TESTE' : 'PRODUÇÃO'}`);
-        return res.status(201).json({ message: 'Produto cadastrado com sucesso!'}); 
+        return res.status(201).json({ message: 'Produto cadastrado!'}); 
     }
 });
 
@@ -108,36 +102,31 @@ app.get('/api/produtos/:id', (req, res) => {
     const context = getContext(req);
     const id = parseInt(req.params.id);
     const produto = context.produtos.find(p => p.id === id); 
-    if (produto) { res.json(produto); } else { res.status(404).json({ message: 'Produto não encontrado.' }); }
+    if (produto) res.json(produto); else res.status(404).json({ message: 'Produto não encontrado.' });
 });
 
-// --- LÓGICA DE PROPOSTAS ---
+// ==========================================
+// LÓGICA DE PROPOSTAS
+// ==========================================
 app.post('/cadastrar-proposta', (req, res) => {
     const context = getContext(req);
     let propostaData = req.body;
 
-    if (propostaData.id !== undefined && propostaData.id !== null && propostaData.id !== "") {
+    if (propostaData.id) {
         const id = parseInt(propostaData.id);
         const index = context.propostas.findIndex(p => p.id === id);
         if (index !== -1) {
-            const dataCadastroOriginal = context.propostas[index].dataCadastro;
-            context.propostas[index] = {
-                ...context.propostas[index], 
-                ...propostaData, 
-                dataCadastro: dataCadastroOriginal,
-                id: id
-            };
-            return res.status(200).json({ message: 'Proposta atualizada com sucesso!'});
-        } else {
-            return res.status(404).json({ message: 'Erro: Proposta não encontrada.' });
+            const dataOriginal = context.propostas[index].dataCadastro;
+            context.propostas[index] = { ...context.propostas[index], ...propostaData, dataCadastro: dataOriginal, id: id };
+            return res.status(200).json({ message: 'Proposta atualizada!'});
         }
+        return res.status(404).json({ message: 'Proposta não encontrado.' });
     } else {
+        propostaData.id = Date.now();
         propostaData.dataCadastro = new Date().toLocaleString('pt-BR');
-        propostaData.dataUltimaAlteracao = propostaData.dataCadastro;
-        propostaData.id = context.propostas.length + 1; 
         propostaData.status = 'ativa'; 
         context.propostas.push(propostaData);
-        return res.status(201).json({ message: 'Proposta cadastrada com sucesso!'});
+        return res.status(201).json({ message: 'Proposta cadastrada!'});
     }
 });
 
@@ -150,7 +139,7 @@ app.get('/api/propostas/:id', (req, res) => {
     const context = getContext(req);
     const id = parseInt(req.params.id);
     const proposta = context.propostas.find(p => p.id === id);
-    if (proposta) { res.json(proposta); } else { res.status(404).json({ message: 'Proposta não encontrada.' }); }
+    if (proposta) res.json(proposta); else res.status(404).json({ message: 'Proposta não encontrada.' });
 });
 
 app.post('/api/propostas/concluir/:id', (req, res) => {
@@ -166,46 +155,161 @@ app.post('/api/propostas/concluir/:id', (req, res) => {
     }
 });
 
-// --- LÓGICA DE CLIENTES E FORNECEDORES ---
+// ==========================================
+// LÓGICA DE FATURAS COMERCIAIS (NOVO MÓDULO)
+// ==========================================
+
+// 1. Listar Faturas
+app.get('/api/faturas', (req, res) => {
+    const context = getContext(req);
+    // Garante que o array existe
+    if (!context.faturas) context.faturas = [];
+    res.json(context.faturas);
+});
+
+// 2. Buscar Fatura Única
+app.get('/api/faturas/:id', (req, res) => {
+    const context = getContext(req);
+    const id = parseInt(req.params.id);
+    const fatura = context.faturas ? context.faturas.find(f => f.id === id) : null;
+    if (fatura) res.json(fatura); 
+    else res.status(404).json({ message: "Fatura não encontrada" });
+});
+
+// 3. Criar Nova Fatura
+app.post('/api/faturas', (req, res) => {
+    const context = getContext(req);
+    if (!context.faturas) context.faturas = [];
+
+    const novaFatura = req.body;
+    novaFatura.id = Date.now();
+    novaFatura.dataCriacao = new Date().toLocaleString('pt-BR');
+    novaFatura.status = "Rascunho";
+    novaFatura.assinada = false;
+    
+    context.faturas.push(novaFatura);
+    res.status(201).json({ success: true, id: novaFatura.id, message: "Fatura criada!" });
+});
+
+// 4. Editar Fatura (PUT)
+app.put('/api/faturas/:id', (req, res) => {
+    const context = getContext(req);
+    const id = parseInt(req.params.id);
+    
+    if (!context.faturas) return res.status(404).json({ message: "Nenhuma fatura encontrada." });
+
+    const index = context.faturas.findIndex(f => f.id === id);
+
+    if (index !== -1) {
+        // Bloqueio de segurança: Se assinada, não edita
+        if (context.faturas[index].assinada) {
+            return res.status(403).json({ success: false, message: "Fatura assinada não pode ser editada." });
+        }
+        
+        // Atualiza mantendo ID e Data de Criação originais
+        const dadosOriginais = { 
+            id: id, 
+            dataCriacao: context.faturas[index].dataCriacao,
+            status: context.faturas[index].status,
+            assinada: context.faturas[index].assinada 
+        };
+
+        context.faturas[index] = { ...req.body, ...dadosOriginais };
+        // Atualiza dados que podem ter mudado no corpo (exceto ID e assinatura que forçamos acima)
+        // Mas se o front mandou status ou outros campos, vamos garantir a mesclagem correta:
+        context.faturas[index] = { ...context.faturas[index], ...req.body, id: id, assinada: false }; 
+        
+        res.json({ success: true, message: "Fatura atualizada!" });
+    } else {
+        res.status(404).json({ success: false, message: "Fatura não encontrada" });
+    }
+});
+
+// 5. Assinar Fatura
+app.post('/api/faturas/:id/assinar', (req, res) => {
+    const context = getContext(req);
+    const id = parseInt(req.params.id);
+    
+    if (!context.faturas) return res.status(404).json({ message: "Erro de contexto." });
+
+    const fatura = context.faturas.find(f => f.id === id);
+
+    if (fatura) {
+        fatura.assinada = true;
+        fatura.status = "Emitida";
+        res.json({ success: true, message: "Fatura assinada com sucesso!" });
+    } else {
+        res.status(404).json({ success: false, message: "Fatura não encontrada" });
+    }
+});
+
+
+// ==========================================
+// LÓGICA DE CLIENTES E FORNECEDORES
+// ==========================================
 app.post('/cadastrar-cliente', (req, res) => {
     const context = getContext(req);
     let clienteData = req.body;
     
-    // Gera ID e Data
-    clienteData.id = context.clientes.length + 1;
-    clienteData.dataCadastro = new Date().toLocaleString('pt-BR');
-    
-    context.clientes.push(clienteData);
-    console.log(`Novo ${clienteData.tipo} cadastrado: ${clienteData.nome}`);
-    
-    res.status(201).json({ message: 'Cadastro realizado com sucesso!' });
+    if (clienteData.id) {
+        // Edição
+        const id = parseInt(clienteData.id);
+        const index = context.clientes.findIndex(c => c.id === id);
+        if (index !== -1) {
+            const dataOriginal = context.clientes[index].dataCadastro;
+            context.clientes[index] = { ...context.clientes[index], ...clienteData, dataCadastro: dataOriginal, id: id };
+            return res.status(200).json({ message: 'Cadastro atualizado!' });
+        } else {
+             return res.status(404).json({ message: 'Cliente não encontrado.' });
+        }
+    } else {
+        // Novo
+        clienteData.id = Date.now(); 
+        clienteData.dataCadastro = new Date().toLocaleString('pt-BR');
+        
+        if (!context.clientes) context.clientes = [];
+        
+        context.clientes.push(clienteData);
+        console.log(`Novo ${clienteData.tipo} cadastrado: ${clienteData.nome}`);
+        return res.status(201).json({ message: 'Cadastro realizado com sucesso!' });
+    }
 });
 
 app.get('/api/clientes', (req, res) => { 
     const context = getContext(req);
-    res.json(context.clientes); 
+    res.json(context.clientes || []); 
+});
+
+app.get('/api/clientes/:id', (req, res) => {
+    const context = getContext(req);
+    const id = parseInt(req.params.id);
+    const cliente = context.clientes ? context.clientes.find(c => c.id === id) : null;
+    if (cliente) { res.json(cliente); } else { res.status(404).json({ message: 'Cliente não encontrado.' }); }
 });
 
 app.delete('/api/clientes/:id', (req, res) => {
     const context = getContext(req);
     const id = parseInt(req.params.id);
-    const index = context.clientes.findIndex(c => c.id === id);
     
+    if (!context.clientes) {
+        return res.status(404).json({ message: 'Lista vazia.' });
+    }
+
+    const index = context.clientes.findIndex(c => c.id === id);
     if (index !== -1) {
-        context.clientes.splice(index, 1); // Remove do array
-        res.status(200).json({ message: 'Cliente removido com sucesso!' });
+        context.clientes.splice(index, 1);
+        res.status(200).json({ message: 'Removido com sucesso.' });
     } else {
         res.status(404).json({ message: 'Cliente não encontrado.' });
     }
 });
 
-// --- DASHBOARD (Calcula com base no contexto) ---
+// ==========================================
+// DASHBOARD & CONFIGURAÇÕES
+// ==========================================
 app.get('/api/dashboard/vendas-stats', (req, res) => {
     const context = getContext(req);
-    let vendasMesAtualUSD = 0;
-    let vendasMesAnteriorUSD = 0;
-    let concluidosMesCount = 0;
-    
+    let vendasMesAtualUSD = 0, vendasMesAnteriorUSD = 0, concluidosMesCount = 0;
     const agora = new Date();
     const mesAtual = agora.getMonth();
     const anoAtual = agora.getFullYear();
@@ -216,12 +320,10 @@ app.get('/api/dashboard/vendas-stats', (req, res) => {
         if (proposta.status === 'concluida' && proposta.dataConclusao) {
             const dataConclusao = new Date(proposta.dataConclusao);
             const valor = parseFloat(proposta.valor_total_usd) || 0;
-            
             if (dataConclusao.getMonth() === mesAtual && dataConclusao.getFullYear() === anoAtual) {
                 vendasMesAtualUSD += valor;
                 concluidosMesCount++;
-            }
-            else if (dataConclusao.getMonth() === mesAnterior && dataConclusao.getFullYear() === anoDoMesAnterior) {
+            } else if (dataConclusao.getMonth() === mesAnterior && dataConclusao.getFullYear() === anoDoMesAnterior) {
                 vendasMesAnteriorUSD += valor;
             }
         }
@@ -229,45 +331,178 @@ app.get('/api/dashboard/vendas-stats', (req, res) => {
     res.json({ vendasMesAtualUSD, vendasMesAnteriorUSD, concluidosMesCount });
 });
 
-// --- CONFIGURAÇÕES ---
 app.get('/api/empresa', (req, res) => { res.json(dadosDaEmpresa); });
 app.post('/api/empresa', (req, res) => {
-    const novosDados = req.body;
-    dadosDaEmpresa = { ...dadosDaEmpresa, ...novosDados };
-    res.status(200).json({ message: 'Dados da empresa salvos com sucesso!' });
+    dadosDaEmpresa = { ...dadosDaEmpresa, ...req.body };
+    res.status(200).json({ message: 'Salvo!' });
 });
 
-// API de Configurações de Cadastro (Salva preferências e permissões)
-app.get('/api/configuracoes/cadastro', (req, res) => {
-    res.json(configuracoesCadastro);
-});
+app.get('/api/configuracoes/cadastro', (req, res) => res.json(configuracoesCadastro));
 app.post('/api/configuracoes/cadastro', (req, res) => {
-    const novosDados = req.body;
-    configuracoesCadastro = { ...configuracoesCadastro, ...novosDados };
-    console.log("Configurações atualizadas:", configuracoesCadastro);
-    res.status(200).json({ message: 'Configurações salvas!' });
+    configuracoesCadastro = { ...configuracoesCadastro, ...req.body };
+    res.status(200).json({ message: 'Salvo!' });
 });
 
-// --- LÓGICA DE CONFIGURAÇÕES (ABA OPERACIONAL) ---
-app.get('/api/configuracoes/operacional', (req, res) => {
-    res.json(configuracoesOperacional);
-});
+app.get('/api/configuracoes/operacional', (req, res) => res.json(configuracoesOperacional));
 app.post('/api/configuracoes/operacional', (req, res) => {
-    const novosDados = req.body;
-    configuracoesOperacional = { ...configuracoesOperacional, ...novosDados };
-    console.log("Configurações operacionais atualizadas:", configuracoesOperacional);
-    res.status(200).json({ message: 'Configurações operacionais salvas!' });
+    configuracoesOperacional = { ...configuracoesOperacional, ...req.body };
+    res.status(200).json({ message: 'Salvo!' });
 });
 
-// --- ROTAS PRINCIPAIS ---
+// --- ROTAS DE ARQUIVOS ---
 app.use(express.static(path.join(__dirname, 'public')));
-app.get('/', (req, res) => { res.sendFile(path.join(__dirname, 'public', 'index.html')); });
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+
+// --- SISTEMA DE USUÁRIOS ---
+let usuarios = [
+    { id: 1, login: 'DEV001', senha: 'DEV002', tipo: 'Admin' }
+];
+
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
-    if (username === 'DEV001' && password === 'DEV002') {
+    const user = usuarios.find(u => u.login === username && u.senha === password);
+    if (user) {
+        res.json({ success: true, user: { id: user.id, login: user.login, tipo: user.tipo } });
+    } else {
+        res.json({ success: false, message: 'Credenciais inválidas.' });
+    }
+});
+
+app.get('/api/usuarios', (req, res) => { res.json(usuarios); });
+
+app.post('/api/usuarios', (req, res) => {
+    const { login, senha, tipo } = req.body;
+    if (usuarios.find(u => u.login === login)) {
+        return res.status(400).json({ message: 'Este nome de usuário já existe.' });
+    }
+    const novoUsuario = { id: Date.now(), login, senha, tipo: tipo || 'Funcionario' };
+    usuarios.push(novoUsuario);
+    res.status(201).json({ message: 'Usuário criado com sucesso!' });
+});
+
+app.put('/api/usuarios/:id', (req, res) => {
+    const id = parseInt(req.params.id);
+    const { login, senhaAtual, novaSenha } = req.body;
+    const index = usuarios.findIndex(u => u.id === id);
+
+    if (index === -1) return res.status(404).json({ message: 'Usuário não encontrado.' });
+
+    if (senhaAtual && novaSenha) {
+        if (usuarios[index].senha !== senhaAtual) {
+            return res.status(401).json({ message: 'Senha atual incorreta.' });
+        }
+        usuarios[index].senha = novaSenha;
+    }
+    if (login) {
+        const existe = usuarios.find(u => u.login === login && u.id !== id);
+        if (existe) return res.status(400).json({ message: 'Nome de usuário indisponível.' });
+        usuarios[index].login = login;
+    }
+    res.json({ success: true, message: 'Dados atualizados com sucesso!' });
+});
+
+app.post('/api/mudar-senha', (req, res) => {
+    const { senhaAtual, novaSenha } = req.body;
+    const user = usuarios.find(u => u.senha === senhaAtual);
+    if (!user) return res.status(401).json({ success: false, message: 'Senha atual incorreta.' });
+    user.senha = novaSenha;
+    res.status(200).json({ success: true, message: 'Senha alterada com sucesso!' });
+});
+
+// =================================================================
+// MÓDULO: PACKING LIST (Lista de Empaque)
+// =================================================================
+
+// 1. Listar Packing Lists
+app.get('/api/packing-lists', (req, res) => {
+    const context = getContext(req);
+    if (!context.packingLists) context.packingLists = [];
+    res.json(context.packingLists);
+});
+
+// 2. Buscar Packing List Único
+app.get('/api/packing-lists/:id', (req, res) => {
+    const context = getContext(req);
+    const id = parseInt(req.params.id);
+    const pl = context.packingLists ? context.packingLists.find(p => p.id === id) : null;
+    if (pl) res.json(pl);
+    else res.status(404).json({ message: "Packing List não encontrado" });
+});
+
+// 3. Criar Novo
+app.post('/api/packing-lists', (req, res) => {
+    const context = getContext(req);
+    if (!context.packingLists) context.packingLists = [];
+
+    const novoPL = req.body;
+    novoPL.id = Date.now();
+    novoPL.dataCriacao = new Date().toLocaleString('pt-BR');
+    novoPL.assinada = false;
+    
+    context.packingLists.push(novoPL);
+    res.status(201).json({ success: true, id: novoPL.id });
+});
+
+// 4. Editar
+app.put('/api/packing-lists/:id', (req, res) => {
+    const context = getContext(req);
+    const id = parseInt(req.params.id);
+    if (!context.packingLists) return res.status(404).json({ message: "Lista vazia." });
+
+    const index = context.packingLists.findIndex(p => p.id === id);
+    if (index !== -1) {
+        if (context.packingLists[index].assinada) {
+            return res.status(403).json({ success: false, message: "Documento assinado não pode ser editado." });
+        }
+        // Mantém ID e Assinatura originais
+        context.packingLists[index] = { ...req.body, id: id, assinada: false };
         res.json({ success: true });
     } else {
-        res.json({ success: false, message: 'Usuário ou senha inválidos.' });
+        res.status(404).json({ success: false, message: "Não encontrado" });
+    }
+});
+
+// 5. Assinar
+app.post('/api/packing-lists/:id/assinar', (req, res) => {
+    const context = getContext(req);
+    const id = parseInt(req.params.id);
+    const pl = context.packingLists.find(p => p.id === id);
+    if (pl) {
+        pl.assinada = true;
+        res.json({ success: true });
+    } else {
+        res.status(404).json({ success: false });
+    }
+});
+
+// 6. Excluir
+app.delete('/api/packing-lists/:id', (req, res) => {
+    const context = getContext(req);
+    const id = parseInt(req.params.id);
+    const index = context.packingLists.findIndex(p => p.id === id);
+    if (index !== -1) {
+        context.packingLists.splice(index, 1);
+        res.json({ success: true });
+    } else {
+        res.status(404).json({ success: false });
+    }
+});
+
+// 7. Duplicar
+app.post('/api/packing-lists/:id/duplicar', (req, res) => {
+    const context = getContext(req);
+    const id = parseInt(req.params.id);
+    const original = context.packingLists.find(p => p.id === id);
+    
+    if (original) {
+        const copia = { ...original };
+        copia.id = Date.now();
+        copia.ref = original.ref + " (Cópia)";
+        copia.assinada = false; // Cópia nasce não assinada
+        context.packingLists.push(copia);
+        res.json({ success: true, id: copia.id });
+    } else {
+        res.status(404).json({ success: false });
     }
 });
 
